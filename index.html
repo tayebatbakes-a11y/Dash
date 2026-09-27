@@ -1325,8 +1325,8 @@ function computeBalances(asOfDate){
       e.credit+=t.amount;
       e.wallet_in+=t.amount;
       e.commission+=(t.commission||0);
-      // نضيف المبلغ لحساب المحفظة المحددة
-      if(t.wallet_name && b[t.wallet_name]){
+      // نضيف المبلغ لحساب المحفظة المحددة (بس لو مختلف عن الحساب)
+      if(t.wallet_name && t.wallet_name !== t.name && b[t.wallet_name]){
         b[t.wallet_name].credit += t.amount;
       }
     }
@@ -1348,6 +1348,17 @@ function computeBalances(asOfDate){
       e.monthly[m]+=t.amount;
     }
     if(t.date&&(!e.lastDate||t.date>e.lastDate)) e.lastDate=t.date;
+  });
+  // معالجة السحوبات عشان تأثر على أرصدة المحافظ
+  (d.expenses||[]).forEach(function(ex){
+    if(asOfDate && ex.date > asOfDate) return;
+    var amt = Number(ex.amount||0);
+    if(ex.method === 'wallet' && ex.walletName && b[ex.walletName]){
+      b[ex.walletName].debit += amt;
+    }
+    if(ex.method === 'insta' && b['انستا']){
+      b['انستا'].debit += amt;
+    }
   });
   Object.keys(b).forEach(function(name){
     const e=b[name];
@@ -2507,11 +2518,10 @@ function getWalletMonthly(walletName){
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
   let total = 0;
-  d.txs.forEach(function(t){
-    if(t.name === walletName && t.date >= monthStart){
-      if(t.type === 'credit_cash' || t.type === 'credit_wallet' || t.type === 'credit_insta'){
-        total += t.amount;
-      }
+  // نجمع السحوبات من المحفظة عشان الليميت يقل
+  (d.expenses||[]).forEach(function(e){
+    if(e.method === 'wallet' && e.walletName === walletName && e.date >= monthStart){
+      total += Number(e.amount||0);
     }
   });
   return { total: total, monthStart: monthStart };
