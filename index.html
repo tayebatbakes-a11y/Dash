@@ -522,6 +522,18 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
         <option value="adjust_add">⚖️ تسوية (إضافة)</option>
         <option value="adjust_sub">⚖️ تسوية (خصم)</option>
       </select>
+      <div id="compPayMethodWrap" style="display:none">
+        <label>طريقة الدفع</label>
+        <select id="compPayMethod" onchange="toggleCompWallet()">
+          <option value="cash">💵 كاش</option>
+          <option value="wallet">💼 محفظة</option>
+          <option value="insta">📸 انستا</option>
+        </select>
+        <div id="compWalletWrap" style="display:none;margin-top:8px">
+          <label>اختار المحفظة</label>
+          <select id="compWalletSelect"></select>
+        </div>
+      </div>
       <label>التاريخ</label>
       <input id="compTxDate" type="date">
       <label>المبلغ</label>
@@ -936,6 +948,48 @@ function saveNewSupplier(){
 
 
 
+function toggleCompPayMethod(){
+  var t = document.getElementById('compTxType');
+  var w = document.getElementById('compPayMethodWrap');
+  if(!t || !w) return;
+  // نظهر طريقة الدفع بس للتوريد
+  if(t.value === 'supply'){
+    w.style.display = 'block';
+    fillCompWallets();
+  } else {
+    w.style.display = 'none';
+  }
+}
+function toggleCompWallet(){
+  var m = document.getElementById('compPayMethod');
+  var w = document.getElementById('compWalletWrap');
+  if(!m || !w) return;
+  if(m.value === 'wallet'){
+    w.style.display = 'block';
+    fillCompWallets();
+  } else {
+    w.style.display = 'none';
+  }
+}
+function fillCompWallets(){
+  var sel = document.getElementById('compWalletSelect');
+  if(!sel) return;
+  var d = load();
+  sel.innerHTML = '';
+  (d.accounts || []).filter(function(a){ return a.type === 'wallet'; }).forEach(function(a){
+    var o = document.createElement('option');
+    o.value = a.name;
+    o.textContent = a.name + (a.number ? ' - ' + a.number : '');
+    sel.appendChild(o);
+  });
+  if(sel.options.length === 0){
+    var o2 = document.createElement('option');
+    o2.value = '';
+    o2.textContent = '-- مفيش محافظ --';
+    sel.appendChild(o2);
+  }
+}
+
 function addCompanyTx(){
   const type = document.getElementById('compTxType').value;
   const date = document.getElementById('compTxDate').value || new Date().toISOString().split('T')[0];
@@ -948,8 +1002,37 @@ function addCompanyTx(){
   
   if(type === 'supply'){
     if(!d.company.supplies) d.company.supplies = [];
-    d.company.supplies.push({amount: amount, note: note, date: date});
-    alert('✅ اتسجل توريد ' + fmt(amount) + ' ج');
+    var payMethod = (document.getElementById('compPayMethod') || {}).value || 'cash';
+    var walletName = '';
+    if(payMethod === 'wallet'){
+      var wSel = document.getElementById('compWalletSelect');
+      walletName = wSel ? wSel.value : '';
+      if(!walletName){ alert('اختار المحفظة'); return; }
+    }
+    d.company.supplies.push({amount: amount, note: note, date: date, method: payMethod, walletName: walletName});
+    // نسجل خروج الفلوس من الوسيلة
+    if(!d.txs) d.txs = [];
+    if(payMethod === 'wallet'){
+      d.txs.push({
+        name: walletName, type: 'debit_wallet', amount: amount,
+        date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
+        original: '', wallet_name: walletName
+      });
+    } else if(payMethod === 'cash'){
+      d.txs.push({
+        name: 'كاش', type: 'debit_cash', amount: amount,
+        date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
+        original: ''
+      });
+    } else if(payMethod === 'insta'){
+      d.txs.push({
+        name: 'انستا', type: 'debit_insta', amount: amount,
+        date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
+        original: '', wallet_name: 'انستا'
+      });
+    }
+    var mLabel = payMethod === 'cash' ? 'كاش' : (payMethod === 'wallet' ? walletName : 'انستا');
+    alert('✅ اتسجل توريد ' + fmt(amount) + ' ج من ' + mLabel);
   }
   else if(type === 'invoice'){
     // نضيف فاتورة آجلة (كأنها لعملاء متعددين) — هنضيفها كمعاملة عامة
