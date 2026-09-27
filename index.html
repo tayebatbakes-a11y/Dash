@@ -117,7 +117,9 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
     <button class="tab" onclick="tab('cust',this)">👥 عملاء</button>
     <button class="tab" onclick="tab('dailyCollect',this)">💵 تحصيل اليوم</button>
     <button class="tab" onclick="tab('collect',this)">📋 مديونيات</button>
-    <button class="tab" onclick="tab('supplier',this)">🏭 موردين</button>
+    <button class="tab" onclick="tab('loans',this)">💼 سلف</button>
+    <button class="tab" onclick="tab('pers',this)">👤 شخصية</button>
+    <button class="tab" onclick="tab('exp',this)">💸 مصروفات</button>
     <button class="tab" onclick="tab('wallets',this)">💰 المحافظ</button>
     <button class="tab" onclick="tab('company',this)">🏢 الشركة</button>
     <button class="tab" onclick="tab('mujannab',this)">🛡️ مجنبات</button>
@@ -125,6 +127,7 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
     <button class="tab" onclick="tab('close',this)">🔒 إغلاق</button>
     <button class="tab" onclick="tab('audit',this)">🔍 تدقيق</button>
     <button class="tab" onclick="tab('set',this)">⚙️ إعدادات</button>
+    <button class="tab" onclick="tab('assistant',this)" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;border-color:#8b5cf6">🤖 المساعد</button>
   </div>
 
   <div id="dashTab">
@@ -149,7 +152,7 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
       <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;margin-bottom:10px">
         <div style="font-weight:bold;color:#dc2626;margin-bottom:8px;font-size:14px">⚠️ اللي عليّا (خصومي)</div>
         <div class="stat"><span class="lbl">🏢 عليّا للشركة</span><span class="val red" id="negCompany">0</span></div>
-        <div class="stat"><span class="lbl">🏭 عليّا للموردين</span><span class="val red" id="negSuppliers">0</span></div>
+        <div class="stat"><span class="lbl">⚠️ عليّا (سلف + موردين)</span><span class="val red" id="negSuppliers">0</span></div>
         <div class="stat" style="background:#fee2e2;padding:8px;border-radius:6px;margin-top:6px">
           <span class="lbl" style="font-weight:bold;color:#991b1b">📊 إجمالي الخصوم</span>
           <span class="val red" style="font-size:16px" id="negTotal">0</span>
@@ -167,6 +170,11 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
       <div id="netPositionBox" style="border-radius:12px;padding:16px;text-align:center;font-size:16px;font-weight:bold">
         <!-- يتم تعبئته من JS -->
       </div>
+    </div>
+
+    <div class="card" id="cashBreakdownCard" style="background:#f7f9f2;border:2px solid #6b7c3d">
+      <div class="section-title" style="color:#4a5d23">💰 نقديتي بالتفصيل</div>
+      <div id="cashBreakdown"></div>
     </div>
 
     <div class="card">
@@ -260,7 +268,11 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
       <input id="fNote">
       <button onclick="addTx()">✅ حفظ</button>
     </div>
-  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px">
+  <button onclick="openWithdraw('cash')" style="background:#0ea5e9;color:#fff;padding:10px;font-size:12px;font-weight:bold">💵 سحب كاش</button>
+  <button onclick="openWithdraw('wallet')" style="background:#7c3aed;color:#fff;padding:10px;font-size:12px;font-weight:bold">📱 سحب محفظة</button>
+  <button onclick="openWithdraw('insta')" style="background:#ea580c;color:#fff;padding:10px;font-size:12px;font-weight:bold">⚡ سحب انستا</button>
+</div></div>
 
   <div id="custTab" style="display:none">
     <div class="card" style="background:#f7f9f2;border:2px solid #6b7c3d">
@@ -410,29 +422,47 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
     <div id="walletList"></div>
   </div>
 
-  <div id="supplierTab" style="display:none">
+  
+
+    <div id="loansTab" style="display:none">
     <div class="card">
-      <button onclick="showAddSupplier()" style="background:#ea580c;color:#fff;margin-bottom:10px">➕ إضافة مورد جديد</button>
-      <div id="addSupplierBox" style="display:none;background:#fff7ed;border:1px solid #fb923c;border-radius:8px;padding:10px;margin-bottom:10px">
-        <label>اسم المورد</label>
-        <input id="newSupName" placeholder="اسم المورد">
-        <label>الرصيد الافتتاحي (اختياري)</label>
-        <input id="newSupBalance" type="number" placeholder="0">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <button onclick="saveNewSupplier()" style="background:#ea580c;color:#fff">💾 حفظ</button>
-          <button onclick="cancelAddSupplier()" style="background:#64748b;color:#fff">✖️ إلغاء</button>
-        </div>
+      <div class="section-title">💼 السلف</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="background:#f0fdf4;padding:10px;border-radius:10px;text-align:center"><div style="font-size:11px;color:#166534">ليّا</div><div id="loansToMe" style="font-size:16px;font-weight:bold;color:#166534">0</div></div>
+        <div style="background:#fef2f2;padding:10px;border-radius:10px;text-align:center"><div style="font-size:11px;color:#991b1b">عليّا</div><div id="loansOnMe" style="font-size:16px;font-weight:bold;color:#991b1b">0</div></div>
+        <div style="background:#f8fafc;padding:10px;border-radius:10px;text-align:center"><div style="font-size:11px;color:#334155">صافي</div><div id="loansNet" style="font-size:16px;font-weight:bold">0</div></div>
       </div>
-      <div class="section-title">🏭 الموردين</div>
-      <div class="stat"><span class="lbl">📥 إجمالي المشتريات</span><span class="val red" id="supTotal">0</span></div>
-      <div class="stat"><span class="lbl">💵 إجمالي المدفوع</span><span class="val" id="supPaid">0</span></div>
-      <div class="stat"><span class="lbl">📊 الباقي</span><span class="val red" id="supOwed">0</span></div>
-      <div class="stat"><span class="lbl">👥 عدد الموردين</span><span class="val" id="supCount">0</span></div>
+      <button onclick="openLenderModal()" style="background:#92400e;color:#fff">➕ إضافة مقرض جديد</button>
     </div>
-    <div id="supList"></div>
+    <div id="lendersList"></div>
   </div>
 
-  <div id="companyTab" style="display:none">
+  <div id="persTab" style="display:none">
+    <div class="card">
+      <div class="section-title">👤 المصروفات الشخصية</div>
+      <button onclick="openExpModal('personal')" style="background:#166534;color:#fff;margin-bottom:10px">➕ إضافة سحب شخصي</button>
+      <div style="background:#f0fdf4;padding:10px;border-radius:10px;text-align:center;margin-bottom:10px">
+        <div style="font-size:11px;color:#166534">الإجمالي</div>
+        <div id="persTotal" style="font-size:18px;font-weight:bold;color:#166534">0</div>
+      </div>
+      <div style="font-size:12px;color:#666;background:#fffbeb;padding:8px;border-radius:6px;margin-bottom:10px">💡 السحوبات الشخصية مش بتزود العجز</div>
+    </div>
+    <div id="persList"></div>
+  </div>
+
+  <div id="expTab" style="display:none">
+    <div class="card">
+      <div class="section-title">💸 المصروفات</div>
+      <button onclick="openExpModal('operational')" style="background:#dc2626;color:#fff;margin-bottom:10px">➕ إضافة مصروف</button>
+      <div style="background:#fef2f2;padding:10px;border-radius:10px;text-align:center;margin-bottom:10px">
+        <div style="font-size:11px;color:#991b1b">الإجمالي</div>
+        <div id="expTotal" style="font-size:18px;font-weight:bold;color:#991b1b">0</div>
+      </div>
+    </div>
+    <div id="expList"></div>
+  </div>
+
+<div id="companyTab" style="display:none">
     <div class="card">
       <div class="section-title">🏢 حساب الشركة <span id="compDateLabel" style="color:#d97706"></span></div>
       <label>الحد الائتماني (من الشركة)</label>
@@ -444,17 +474,12 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
     <div class="card">
       <div class="section-title">📊 حالة الائتمان</div>
       <div class="stat"><span class="lbl">💳 الحد الائتماني الكلي</span><span class="val" id="totalLimit">0</span></div>
+      <div class="stat" style="background:#eff6ff;border:2px solid #3b82f6;padding:8px;border-radius:8px;margin-top:4px"><span class="lbl" style="font-weight:bold;color:#1e40af">📊 المتبقي من الائتمان</span><span class="val" style="font-weight:bold;color:#1e40af;font-size:16px" id="remainLimit">0</span></div>
       <div class="stat"><span class="lbl">💰 إجمالي مديونية الشركة</span><span class="val red" id="totalCreditInv">0</span></div>
       <div class="stat"><span class="lbl">📥 إجمالي التوريدات</span><span class="val" id="totalSupplies">0</span></div>
       <div class="stat"><span class="lbl">⚖️ التسويات</span><span class="val" id="usedAdjust">0</span></div>
-      <div class="stat" style="background:#d1fae5;padding:8px;border-radius:6px;margin-top:6px">
-        <span class="lbl" style="font-weight:bold;color:#065f46">💳 المتبقي من الحد الائتماني</span>
-        <span class="val" id="remainCredit" style="color:#065f46;font-size:16px">0</span>
-      </div>
-      <div class="stat" id="overLimitBox" style="display:none;background:#fee2e2;padding:8px;border-radius:6px;margin-top:6px">
-        <span class="lbl" style="font-weight:bold;color:#991b1b">⚠️ فوق الحد بـ</span>
-        <span class="val red" id="overLimit" style="font-size:16px">0</span>
-      </div>
+
+
     </div>
 
     <div class="card">
@@ -543,9 +568,9 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
         • <code>محفظة</code> → دفعة محفظة (+1%)<br>
         • <code>انستا</code> → دفعة انستا<br><br>
         <b>مثال:</b><br>
-        عميل1 | فاتورة | 5000<br>
-        عميل2 | أخذت | 3000<br>
-        عميل3 | محفظة | 2000
+        المرسي | فاتورة | 5000<br>
+        البطل | أخذت | 3000<br>
+        حديده | محفظة | 2000
       </div>
       <textarea id="importText" style="min-height:200px"></textarea>
       <button onclick="parseImport()">🔍 معاينة</button>
@@ -558,19 +583,54 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
   </div>
 
   <div id="closeTab" style="display:none">
-    <div class="card">
-      <div class="section-title">🔒 الإغلاق اليومي</div>
-      <label>💵 الكاش الفعلي</label>
-      <input id="closeCash" type="number" oninput="renderClose()">
-      <label>💼 المحافظ الفعلية</label>
-      <input id="closeWallet" type="number" oninput="renderClose()">
-      <label>ملاحظة</label>
-      <input id="closeNote">
-      <div id="closePreview"></div>
-      <button onclick="saveClose()">✅ حفظ</button>
+    <div class="card" style="background:#f7f9f2;border:2px solid #6b7c3d">
+      <div class="section-title" style="color:#4a5d23">🔒 تقرير اليوم — <span id="closeDateLabel"></span></div>
+      <div style="font-size:12px;color:#64748b">
+        💡 ده تقرير كامل عن اليوم المختار من فوق
+      </div>
     </div>
+
     <div class="card">
-      <div class="section-title">📋 سجل الإغلاقات</div>
+      <div class="section-title" style="color:#4a5d23">📱 اللي الأبلكيشن سجله</div>
+      <div class="stat"><span class="lbl">💰 كاش محصل</span><span class="val" id="rCash">0</span></div>
+      <div class="stat"><span class="lbl">💳 محافظ محصلة</span><span class="val" id="rWallet">0</span></div>
+      <div class="stat"><span class="lbl">📸 انستا محصل</span><span class="val" id="rInsta">0</span></div>
+      <div class="stat"><span class="lbl">📤 فواتير آجلة</span><span class="val red" id="rCredit">0</span></div>
+      <div class="stat"><span class="lbl">💵 فواتير كاش</span><span class="val" id="rCashInv">0</span></div>
+      <div class="stat"><span class="lbl">🛡️ مجنبات</span><span class="val warn" id="rMujannab">0</span></div>
+      <div class="stat"><span class="lbl">📥 توريدات للشركة</span><span class="val" id="rSupply">0</span></div>
+      <div class="stat"><span class="lbl">💰 مبادلات</span><span class="val warn" id="rMub">0</span></div>
+    </div>
+
+    <div class="card" style="background:#fff5f5;border:2px solid #fecaca">
+      <div class="section-title" style="color:#991b1b">📊 المديونيات الحالية</div>
+      <div class="stat"><span class="lbl">👥 مديونية العملاء</span><span class="val red" id="rClientsDebt">0</span></div>
+      <div class="stat"><span class="lbl">🏭 مديونية الموردين</span><span class="val red" id="rSupDebt">0</span></div>
+      <div class="stat"><span class="lbl">🏢 مديونية الشركة</span><span class="val red" id="rCompDebt">0</span></div>
+      <div class="stat" style="background:#fee2e2;padding:10px;border-radius:8px;margin-top:6px">
+        <span class="lbl" style="font-weight:bold;color:#991b1b">📊 إجمالي المديونيات</span>
+        <span class="val red" id="rTotalDebt" style="font-size:16px">0</span>
+      </div>
+    </div>
+
+    <div class="card" style="background:#f0f9ff;border:2px solid #bae6fd">
+      <div class="section-title" style="color:#0c4a6e">✍️ اللي انت سجلته يدوياً</div>
+      <label>💵 الكاش الفعلي معاك</label>
+      <input id="closeCash" type="number" placeholder="0" oninput="renderClose()">
+      <label>💳 المحافظ الفعلية</label>
+      <input id="closeWallet" type="number" placeholder="0" oninput="renderClose()">
+      <label>📊 أجل السوق (اللي على العملاء)</label>
+      <input id="closeMarketDebt" type="number" placeholder="0" oninput="renderClose()">
+      <label>ملاحظة</label>
+      <input id="closeNote" placeholder="اختياري">
+    </div>
+
+    <div id="closePreview"></div>
+
+    <button onclick="saveClose()" style="background:#4a5d23;color:#fff">✅ حفظ تقرير اليوم</button>
+
+    <div class="card" style="margin-top:20px">
+      <div class="section-title">📋 سجل التقارير السابقة</div>
       <div id="closeList"></div>
     </div>
   </div>
@@ -589,6 +649,43 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
       <div id="negativesList"></div>
     </div>
     <button onclick="runAudit()">🔄 تشغيل</button>
+  </div>
+
+  
+  <div id="assistantTab" style="display:none">
+    <div class="card" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff">
+      <div style="text-align:center;font-size:20px;font-weight:bold;margin-bottom:6px">🤖 المساعد الذكي</div>
+      <div style="text-align:center;font-size:12px;opacity:.9">مراقب شغلك 24 ساعة — بيفهم، بيحلل، وبينصحك</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🎯 اسأل المساعد</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button onclick="askAI('overall')" style="background:#4a5d23;color:#fff;padding:12px">📊 حلل وضعي</button>
+        <button onclick="askAI('forecast')" style="background:#d97706;color:#fff;padding:12px">📅 توقع الشهر</button>
+        <button onclick="showClientsForAI()" style="background:#6366f1;color:#fff;padding:12px">👥 حلل عميل</button>
+        <button onclick="clearAI()" style="background:#64748b;color:#fff;padding:12px">🗑️ مسح</button>
+      </div>
+    </div>
+
+    <div id="aiClientPicker" class="card" style="display:none">
+      <div class="section-title">👥 اختار عميل</div>
+      <select id="aiClientName"></select>
+      <button onclick="analyzeClient()" style="background:#4a5d23;color:#fff">🤖 حلل العميل</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">💬 اسأل سؤال حر</div>
+      <input id="aiQuestion" placeholder="مثلاً: أعمل إيه عشان أحسن التحصيل؟" style="margin-bottom:8px">
+      <button onclick="askFree()" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff">🚀 اسأل</button>
+    </div>
+
+    <div id="aiStatus" style="text-align:center;color:#6366f1;font-size:14px;margin:10px 0;display:none"></div>
+
+    <div id="aiResult" class="card" style="display:none">
+      <div class="section-title">📋 رد المساعد</div>
+      <div id="aiResultBody" style="white-space:pre-wrap;line-height:2;font-size:14px;color:#1e293b"></div>
+    </div>
   </div>
 
   <div id="setTab" style="display:none">
@@ -650,11 +747,36 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
 <script>
 const DK='konnash_v6';
 
-const SEED_CUSTOMERS = [];
+const SEED_CUSTOMERS = [
+["الرزاق",22000],["نسر الصعيد 3",21503],["كاجو",21282],["مهران",16002],["البطل",16000.5],
+["محمد يوسف",15160],["نور الإسلام",14091],["الوكيل",13956.5],["ستار",12462],["محمصة ياسر",12248],
+["الجندي",12000],["محمصة حمادة",11335],["أمان",10000],["محمد أمين",9824],["باروكا",9788],
+["أفندينا",8826],["حسن السواق",8410],["صبري أم السلطان",7675],["البطل 3",7000.5],["دخان",7000],
+["بشرة خير",6303],["التوحيد",6255],["حودة",6000],["سمسم",5200],["عطارة",5016],
+["السمان",4997],["زيزو",4829],["اللبان القدس",4501],["حكاية",4495],["رجب",4451],
+["المدينة",4145],["زنزم",3897.5],["سندس",3695],["فنتزا",3644],["الخليل",3607],
+["الفتح",3500],["اللبان الشيخ",3312],["مازن",3232],["وطنية جديدة",3135],["طاووق السوالق",3062],
+["مكانك",3044],["سامح",2678],["النجم",2496],["عباد",2387],["بازار حسن",2334],
+["الفلاح خفاجة",2280],["محمصة حمادة 2",2088],["العطار",2000],["الصفوة",1850],["لوز",1460],
+["يس",1400],["إبراهيم",1264],["إسماعيل",1010],["المول",885],["المصطفى",807],
+["المحروسة",720],["دميانة",694.5],["قاصد كريم",505],["عبد الباقي",419],["بازار إبراهيم",346],
+["ياسر",200],["سبعاوي",178.5],["يعقوب",168],["نسر 2 فتح الله",48],["الزيعو",40],
+["قباري",8],["الرغيف",6],
+["المرسي",140000],["إبراهيم",125000],["حديده",57671],["السوهاجي",23494]
+];
 
-const SEED_SPECIAL = [];
+const SEED_SPECIAL = [
+["محفظة",1805,"wallet"],["سبتمبر",1587,"collection"],["أغسطس",15,"collection"],
+["محفظة فارس",0,"wallet"],["محفظة مانز 8061",0,"wallet"],
+["نقديه يونيو",0,"collection"],["نقديه يوليو",0,"collection"],["انستا",0,"insta"]
+];
 
-const SEED_SUPPLIERS = [];
+const SEED_SUPPLIERS = [
+["السيد ابواي",99870,"payment"],
+["ام عبده",30000,"purchase"],
+["شهر الفسل",27986,"payment"],
+["ابراهيم سبتمبر",5461,"payment"]
+];
 
 function load(){
   try{
@@ -698,7 +820,6 @@ function refreshAllTabs(){
   try{ renderDailyCollect(); }catch(e){}
   try{ renderAccounts(); }catch(e){}
   try{ renderCollect(); }catch(e){}
-  try{ renderSuppliers(); }catch(e){}
   try{ renderCompany(); }catch(e){}
   try{ renderMujannab(); }catch(e){}
 }
@@ -1223,7 +1344,7 @@ function computeBalances(asOfDate){
     if(!b[t.name]) b[t.name]={credit:0,debit:0,wallet_in:0,cash_in:0,insta_in:0,commission:0,mujannab:0,type:'client',monthly:{},lastDate:null,lateDays:0};
     const e=b[t.name];
     if(t.type==='debit'){e.debit+=t.amount;}
-    else if(t.type==='cash_sale'){e.credit+=t.amount;e.cash_in+=t.amount;}
+    else if(t.type==='cash_sale'){e.cash_in+=t.amount;}
     else if(t.type==='credit_cash'){e.credit+=t.amount;e.cash_in+=t.amount;}
     else if(t.type==='credit_wallet'){
       e.credit+=t.amount;
@@ -1295,86 +1416,149 @@ function isLate(c){return c.type==='client'&&c.balance>0&&c.lateDays>14;}
 // ====== المصدر الوحيد لكل الأرقام ======
 function computeAllNumbers(){
   const d = load();
-  const c = d.company || {creditLimit:1250000, closeDay:25, supplies:[], mubadalas:[], mubadalaInitial:0};
-  const b = computeBalances(globalDate);
-  
-  // ===== مديونية العملاء =====
+  const c = d.company || {creditLimit:0, closeDay:25, supplies:[], mubadalas:[], adjustments:[], mubadalaInitial:0};
+  const date = globalDate || new Date().toISOString().split('T')[0];
+
+  // ============================================================
+  // 1) العملاء
+  // ============================================================
+  const b = computeBalances(date);
   let clientsOwe = 0;
   let totalInvoices = 0;
   let totalCollected = 0;
-  
+
   Object.keys(b).forEach(function(name){
     const cc = b[name];
-    if(cc.type === 'client'){
-      if(cc.balance > 0) clientsOwe += cc.balance;
-      totalInvoices += cc.debit;
-      totalCollected += cc.credit;
-    }
+    if(cc.type !== 'client') return;
+    if(name === 'شركة (فاتورة عامة)') return;
+    if(cc.balance > 0) clientsOwe += cc.balance;
+    totalInvoices += cc.debit;
+    totalCollected += cc.credit;
   });
-  
-  // ===== الكاش والمحافظ =====
+
+  // ============================================================
+  // 2) الكاش والمحافظ
+  // ============================================================
   let cashInHand = 0, walletInHand = 0, instaInHand = 0;
   d.txs.forEach(function(t){
+    if(t.date > date) return;
     if(t.type === 'credit_cash' || t.type === 'cash_sale') cashInHand += t.amount;
     else if(t.type === 'credit_wallet') walletInHand += t.amount;
     else if(t.type === 'credit_insta') instaInHand += t.amount;
   });
-  
-  // ===== حساب الشركة =====
+  // خصم المصروفات والسلف
+  (d.expenses||[]).forEach(function(e){
+    if(e.date && e.date > date) return;
+    var amt = Number(e.amount||0);
+    if(e.method==='wallet') walletInHand -= amt;
+    else if(e.method==='insta') instaInHand -= amt;
+    else cashInHand -= amt;
+  });
+  (d.loans||[]).forEach(function(l){
+    if(l.date && l.date > date) return;
+    var amt = Number(l.amount||0);
+    var s = (l.direction === 'in') ? 1 : -1;
+    if(l.method==='wallet') walletInHand += s*amt;
+    else if(l.method==='insta') instaInHand += s*amt;
+    else cashInHand += s*amt;
+  });
+  var persTotal = 0;
+  (d.expenses||[]).forEach(function(e){
+    if(e.date && e.date > date) return;
+    if(e.category === 'personal') persTotal += Number(e.amount||0);
+  });
+    const myCash = cashInHand + walletInHand + instaInHand;
+
+  // ============================================================
+  // 3) الشركة (المصدر الوحيد للحقيقة)
+  // ============================================================
   const creditLimit = c.creditLimit || 0;
-  
-  // مديونية الشركة = إجمالي الفواتير الآجلة
-  const totalSuppliesForDebt = (c.supplies||[]).reduce(function(a,s){return a + s.amount;}, 0);
-  const companyDebt = Math.max(0, totalInvoices - totalSuppliesForDebt);
-  
-  // المتاح من الحد = الحد - مديونية الشركة
+
+  // الفواتير الآجلة من الأول (لحد التاريخ) — بدون "خارج المبادلة"
+  let companyInvoices = 0;
+  d.txs.forEach(function(t){
+    if(t.type === 'debit' && !t.outsideMabdala && t.date <= date){
+      companyInvoices += t.amount;
+    }
+  });
+  // + المبادلات اليدوية بتتضاف للفواتير الآجلة
+  (c.mubadalas||[]).forEach(function(m){
+    if(m.date && m.date <= date){
+      companyInvoices += Number(m.amount||0);
+    }
+  });
+
+  // التوريدات
+  const companySupplies = (c.supplies||[])
+    .filter(function(s){ return s.date <= date; })
+    .reduce(function(a,s){ return a + s.amount; }, 0);
+
+  // التسويات
+  const adjustTotal = (c.adjustments||[])
+    .filter(function(a){ return a.date <= date; })
+    .reduce(function(a,x){ return a + x.amount; }, 0);
+
+  // مديونية الشركة الموحّدة
+  const companyDebt = Math.max(0, companyInvoices - companySupplies + adjustTotal);
+
+  // العجز/الفايض
   const availableCredit = creditLimit - companyDebt;
-  
-  // التوريدات والمبادلة
-  const mubadalaInitial = c.mubadalaInitial || 0;
-  const mubadalaManual = (c.mubadalas||[]).reduce(function(a,m){return a + m.amount;}, 0);
-  const totalMubadala = mubadalaInitial + mubadalaManual;
-  const totalSupplies = (c.supplies||[]).reduce(function(a,s){return a + s.amount;}, 0);
-  
-  // المطلوب تسديده للشركة (بعد التوريدات)
-  const owedToCompany = Math.max(0, companyDebt - totalSupplies);
-  
-  // ===== عليّا للموردين =====
+  const overLimit = availableCredit < 0 ? Math.abs(availableCredit) : 0;
+
+  // ============================================================
+  // 4) الموردين
+  // ============================================================
   let supPurchases = 0, supPayments = 0, supReturns = 0;
   (d.supTxs||[]).forEach(function(t){
+    if(t.date > date) return;
     if(t.type === 'purchase') supPurchases += t.amount;
     else if(t.type === 'payment') supPayments += t.amount;
     else if(t.type === 'return') supReturns += t.amount;
   });
   const supOwed = Math.max(0, supPurchases - supPayments - supReturns);
+
+  // ============================================================
+  // 5) المركز المالي
+  // ============================================================
+  // الأصول = مديونية العملاء + نقديتي
   
-  // ===== المركز المالي =====
-  // نقديتي = كاش + محافظ + انستا
-  const myCash = cashInHand + walletInHand + instaInHand;
-  const assets = clientsOwe + myCash;
-  const liabilities = companyDebt + supOwed;
+  // الخصوم = عليّا للشركة + عليّا للموردين
+  let loansOnMe = 0, loansToMe = 0;
+  (d.loans||[]).forEach(function(l){
+    if(l.date && l.date > date) return;
+    if(l.direction === 'in') loansOnMe += Number(l.amount||0);
+    else loansToMe += Number(l.amount||0);
+  });
+  const assets = clientsOwe + myCash + loansToMe + persTotal;
+  const liabilities = companyDebt + supOwed + loansOnMe;
+
+  // الصافي
   const netWorth = assets - liabilities;
-  
+
   return {
+    // العملاء
     clientsOwe: clientsOwe,
     totalInvoices: totalInvoices,
     totalCollected: totalCollected,
+    // الكاش
     cashInHand: cashInHand,
     walletInHand: walletInHand,
     instaInHand: instaInHand,
     myCash: myCash,
+    // الشركة
     creditLimit: creditLimit,
-    totalMubadala: totalMubadala,
-    mubadalaInitial: mubadalaInitial,
-    mubadalaManual: mubadalaManual,
-    totalSupplies: totalSupplies,
+    companyInvoices: companyInvoices,
+    companySupplies: companySupplies,
+    adjustTotal: adjustTotal,
     companyDebt: companyDebt,
     availableCredit: availableCredit,
-    owedToCompany: owedToCompany,
+    overLimit: overLimit,
+    // الموردين
     supOwed: supOwed,
+    // المركز
     assets: assets,
     liabilities: liabilities,
-    netWorth: netWorth
+    netWorth: netWorth,
   };
 }
 
@@ -1382,27 +1566,29 @@ function computeAllNumbers(){
 
 
 
+
+
 function renderPosition(){
   const n = computeAllNumbers();
-  
+
   const setTxt = function(id, v){ const el = document.getElementById(id); if(el) el.textContent = v; };
-  
-  // الأصول
+
+  // ===== الأصول =====
   setTxt('posClients', fmt(n.clientsOwe) + ' ج');
   setTxt('posCash', fmt(n.cashInHand) + ' ج');
   setTxt('posWallet', fmt(n.walletInHand) + ' ج');
   setTxt('posInsta', fmt(n.instaInHand) + ' ج');
-  setTxt('posTotal', fmt(n.assets) + ' ج');
   setTxt('posMyCash', fmt(n.myCash) + ' ج');
-  
-  // الخصوم
+  setTxt('posTotal', fmt(n.assets) + ' ج');
+
+  // ===== الخصوم =====
   setTxt('negCompany', fmt(n.companyDebt) + ' ج');
   setTxt('negSuppliers', fmt(n.supOwed) + ' ج');
   setTxt('negTotal', fmt(n.liabilities) + ' ج');
   setTxt('totalMyDebt', fmt(n.liabilities) + ' ج');
   setTxt('posClientsTotal', fmt(n.clientsOwe) + ' ج');
-  
-  // المركز النهائي
+
+  // ===== المركز النهائي =====
   const box = document.getElementById('netPositionBox');
   if(box){
     const net = n.netWorth;
@@ -1420,7 +1606,75 @@ function renderPosition(){
       box.innerHTML = '⚖️ متوازن<br><span style="font-size:20px;display:block;margin-top:8px">الأصول = الخصوم</span>';
     }
   }
+
+  // ==== تحليل ذكي للوضع المالي ====
+  try{
+    var _n = computeAllNumbers();
+    var cash = _n.myCash || 0;
+    var net = _n.netWorth || 0;
+    var clients = _n.clientsOwe || 0;
+    var debt = _n.liabilities || 0;
+    
+    // تحديد الحالة واللون
+    var status = { bg: '', icon: '', title: '', sub: '' };
+    
+    if(cash >= 0 && net >= 0 && cash >= debt * 0.1){
+      // كاش كويس + صافي موجب + الكاش يغطي 10% من الالتزامات
+      status.bg = 'linear-gradient(135deg,#059669,#047857)';
+      status.icon = '✅';
+      status.title = 'وضعك المالي ممتاز';
+      status.sub = 'كاش: ' + fmt(cash) + ' ج • صافي: ' + fmt(net) + ' ج';
+    }
+    else if(cash >= 0 && net >= 0){
+      // صافي موجب لكن الكاش قليل
+      status.bg = 'linear-gradient(135deg,#0891b2,#0e7490)';
+      status.icon = '💡';
+      status.title = 'الوضع مستقر بس السيولة قليلة';
+      status.sub = 'كاش: ' + fmt(cash) + ' ج • صافي: ' + fmt(net) + ' ج • محتاج تحصيل';
+    }
+    else if(cash >= 0 && net < 0){
+      // كاش موجود بس مديونية عالية
+      status.bg = 'linear-gradient(135deg,#d97706,#b45309)';
+      status.icon = '⚠️';
+      status.title = 'مديونية أعلى من الأصول';
+      status.sub = 'كاش: ' + fmt(cash) + ' ج • صافي: ' + fmt(net) + ' ج • حاول تحصّل من العملاء';
+    }
+    else if(cash < 0 && net >= 0){
+      // كاش سالب بس عندك أصول (سلف + عملاء)
+      status.bg = 'linear-gradient(135deg,#ea580c,#c2410c)';
+      status.icon = '🚨';
+      status.title = 'سيولة سالبة — في خطر فوري';
+      status.sub = 'كاش: ' + fmt(cash) + ' ج (سالب!) • صافي: ' + fmt(net) + ' ج • لازم تحصّل فوراً';
+    }
+    else {
+      // كاش سالب + صافي سالب
+      status.bg = 'linear-gradient(135deg,#dc2626,#991b1b)';
+      status.icon = '🆘';
+      status.title = 'خطر شديد — مديونية عالية وسيولة سالبة';
+      status.sub = 'كاش: ' + fmt(cash) + ' ج • صافي: ' + fmt(net) + ' ج • محتاج خطة إنقاذ عاجلة';
+    }
+    
+    // نحدث الصندوق
+    var allDivs = document.querySelectorAll('div');
+    allDivs.forEach(function(dv){
+      if(!dv.textContent) return;
+      var t = dv.textContent.trim();
+      if(t.indexOf('وضعك المالي') === 0 || t.indexOf('فيه عجز مالي') === 0 || 
+         t.indexOf('⚠️ تحذير') === 0 || t.indexOf('الوضع مستقر') === 0 ||
+         t.indexOf('مديونية أعلى') === 0 || t.indexOf('سيولة سالبة') === 0 ||
+         t.indexOf('خطر شديد') === 0){
+        dv.style.background = status.bg;
+        dv.style.color = '#fff';
+        dv.innerHTML = status.icon + ' ' + status.title + 
+          '<br><span style="font-size:28px;display:block;margin-top:8px">' + fmt(net) + ' ج</span>' +
+          '<div style="font-size:12px;opacity:.95;margin-top:6px;line-height:1.6">' + status.sub + '</div>';
+      }
+    });
+  }catch(e){ console.log('smartPos:', e); }
+  // ==== نهاية التحليل الذكي ====
 }
+
+
 
 
 // متغيرات التحميل التدريجي
@@ -1428,6 +1682,74 @@ let dashLimit = 15;
 let todayLimit = 15;
 let collectLimit = 15;
 let companyLimit = 15;
+
+
+function renderCashBreakdown(){
+  const d = load();
+  const el = document.getElementById('cashBreakdown');
+  if(!el) return;
+
+  const date = globalDate || new Date().toISOString().split('T')[0];
+
+  // نحسب كل حاجة
+  let cashInHand = 0;
+  const wallets = {};  // اسم المحفظة => رصيد
+  const walletNames = [];  // ترتيب
+
+  // أول حاجة: نجيب أسماء المحافظ من الحسابات
+  (d.accounts || []).forEach(function(a){
+    if(a.type === 'wallet'){
+      if(!(a.name in wallets)){
+        wallets[a.name] = 0;
+        walletNames.push(a.name);
+      }
+    }
+  });
+
+  let instaInHand = 0;
+
+  // نحسب الرصيد من المعاملات
+  d.txs.forEach(function(t){
+    if(t.date > date) return;
+
+    if(t.type === 'credit_cash' || t.type === 'cash_sale'){
+      cashInHand += t.amount;
+    }
+    else if(t.type === 'credit_wallet'){
+      const w = t.wallet_name || 'محفظة';
+      if(!(w in wallets)){
+        wallets[w] = 0;
+        walletNames.push(w);
+      }
+      wallets[w] += t.amount;
+    }
+    else if(t.type === 'credit_insta'){
+      instaInHand += t.amount;
+    }
+  });
+
+  const totalWallets = walletNames.reduce(function(s,n){ return s + wallets[n]; }, 0);
+  const total = cashInHand + totalWallets + instaInHand;
+
+  // نبني HTML
+  let html = '';
+
+  // كاش
+  html += '<div class="stat"><span class="lbl">💵 الكاش في إيدي</span><span class="val" style="color:#4a5d23">' + fmt(cashInHand) + ' ج</span></div>';
+
+  // كل محفظة
+  walletNames.forEach(function(w){
+    html += '<div class="stat"><span class="lbl">💳 ' + w + '</span><span class="val" style="color:#4a5d23">' + fmt(wallets[w]) + ' ج</span></div>';
+  });
+
+  // انستا
+  html += '<div class="stat"><span class="lbl">📸 انستا</span><span class="val" style="color:#4a5d23">' + fmt(instaInHand) + ' ج</span></div>';
+
+  // الإجمالي
+  html += '<div class="stat" style="background:#d1fae5;padding:10px;border-radius:8px;margin-top:8px"><span class="lbl" style="font-weight:bold;color:#065f46;font-size:15px">💰 إجمالي نقديتي</span><span class="val" style="color:#065f46;font-size:18px">' + fmt(total) + ' ج</span></div>';
+
+  el.innerHTML = html;
+}
 
 function renderDash(){
   const d=load();
@@ -1470,6 +1792,7 @@ function renderDash(){
   });
   document.getElementById('tLate').textContent=late;
   document.getElementById('tActive').textContent=active;
+  renderCashBreakdown();
   renderPosition();
   const last=d.txs.slice(-dashLimit).reverse();
   document.getElementById('txList').innerHTML=last.map(function(t,i){
@@ -2382,12 +2705,18 @@ function clearMubadala(){
 }
 
 function saveCompany(){
-  const c=getCompany();
-  c.creditLimit=parseFloat(document.getElementById('creditLimit').value)||0;
-  c.closeDay=parseInt(document.getElementById('closeDay').value)||25;
-  saveCompanyData(c);
+  const c = getCompany();
+  const cl = document.getElementById('creditLimit');
+  const cd = document.getElementById('closeDay');
+  if(cl) c.creditLimit = parseFloat(cl.value) || 1250000;
+  if(cd) c.closeDay = parseInt(cd.value) || 25;
+  const d = load();
+  d.company = c;
+  save(d);
   renderCompany();
 }
+
+
 
 
 function deleteSupply(idx){
@@ -2436,14 +2765,18 @@ function renderCompany(){
   const c = getCompany();
   const d = load();
   const n = computeAllNumbers();
-  
+
   document.getElementById('creditLimit').value = c.creditLimit || '';
   document.getElementById('closeDay').value = c.closeDay || 25;
 
-  // ===== المبادلة اليومية (من الفواتير الآجلة) =====
+  const date = globalDate || new Date().toISOString().split('T')[0];
+  const dLabel = document.getElementById('compDateLabel');
+  if(dLabel) dLabel.textContent = '— ' + date;
+
+  // ===== المبادلة اليومية =====
   const dailyMub = {};
   d.txs.forEach(function(t){
-    if(t.type === 'debit' && !t.outsideMabdala){
+    if(t.type === 'debit' && !t.outsideMabdala && t.date <= date){
       if(!dailyMub[t.date]) dailyMub[t.date] = {count:0, total:0};
       dailyMub[t.date].count++;
       dailyMub[t.date].total += t.amount;
@@ -2451,53 +2784,49 @@ function renderCompany(){
   });
   const dailyDates = Object.keys(dailyMub).sort().reverse();
 
-  // ===== ملخص اليوم المختار =====
-  const date = globalDate || new Date().toISOString().split('T')[0];
-  const dLabel = document.getElementById('compDateLabel');
-  if(dLabel) dLabel.textContent = '— ' + date;
-
-  const todayCreditInv = dailyMub[date] ? dailyMub[date].total : 0;
+  // ===== ملخص اليوم =====
+  let todayCreditInv = dailyMub[date] ? dailyMub[date].total : 0;
+  // + المبادلات اليدوية بتاعة النهاردة
+  (c.mubadalas||[]).forEach(function(m){
+    if(m.date === date) todayCreditInv += Number(m.amount||0);
+  });
   const todaySupplies = (c.supplies||[]).filter(function(s){ return s.date === date; })
     .reduce(function(a,s){return a+s.amount;}, 0);
 
   // ===== نحدّث الواجهة =====
   const setTxt = function(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; };
-  
-  // حالة الائتمان
+
   setTxt('totalLimit', fmt(n.creditLimit) + ' ج');
-  setTxt('totalCreditInv', fmt(n.totalMubadala) + ' ج');  // المبادلة الإجمالية
-  setTxt('totalSupplies', fmt(n.totalSupplies) + ' ج');
+  setTxt('totalCreditInv', fmt(n.companyInvoices) + ' ج');
+  setTxt('totalSupplies', fmt(n.companySupplies) + ' ج');
   setTxt('usedAdjust', fmt(n.adjustTotal) + ' ج');
-  
-  // المتبقي من الحد
-  const remainEl = document.getElementById('remainCredit');
-  if(remainEl){
-    if(n.availableCredit >= 0){
-      remainEl.textContent = fmt(n.availableCredit) + ' ج';
-      remainEl.style.color = '#065f46';
-    } else {
-      remainEl.textContent = fmt(Math.abs(n.availableCredit)) + ' ج (فوق الحد)';
-      remainEl.style.color = '#dc2626';
-    }
-  }
-  
-  // مديونية الشركة
   setTxt('mubTotal', fmt(n.companyDebt) + ' ج');
   setTxt('todayCompCreditInv', fmt(todayCreditInv) + ' ج');
   setTxt('todayCompSupply', fmt(todaySupplies) + ' ج');
   setTxt('todayCompDiff', fmt(todayCreditInv - todaySupplies) + ' ج');
 
-  // فوق الحد
+  // المتاح من الحد
+  const remainEl = document.getElementById('remainCredit');
+  if(remainEl){
+    remainEl.textContent = fmt(n.availableCredit) + ' ج';
+    remainEl.style.color = n.availableCredit >= 0 ? '#065f46' : '#dc2626';
+  }
+  const rlEl = document.getElementById('remainLimit');
+  if(rlEl){
+    rlEl.textContent = fmt(n.availableCredit) + ' ج';
+    rlEl.style.color = n.availableCredit >= 0 ? '#1e40af' : '#dc2626';
+  }
+
   const overBox = document.getElementById('overLimitBox');
   const overVal = document.getElementById('overLimit');
-  if(n.availableCredit < 0){
+  if(n.overLimit > 0){
     if(overBox) overBox.style.display = 'flex';
-    if(overVal) overVal.textContent = fmt(Math.abs(n.availableCredit)) + ' ج';
+    if(overVal) overVal.textContent = fmt(n.overLimit) + ' ج';
   } else {
     if(overBox) overBox.style.display = 'none';
   }
 
-  // ===== عرض المبادلة اليومية =====
+  // ===== المبادلة اليومية =====
   const searchDate = (document.getElementById('companyDateSearch') || {}).value || '';
   let filteredDates = dailyDates;
   if(searchDate) filteredDates = dailyDates.filter(function(dt){ return dt === searchDate; });
@@ -2568,6 +2897,8 @@ function renderCompany(){
     }).join('') || '<div class="empty">مفيش توريدات</div>';
   }
 }
+
+
 
 function renderMujannab(){
   const b=computeBalances(globalDate);
@@ -2678,7 +3009,7 @@ function parseImport(){
   if(previewCard) previewCard.style.display = 'block';
   
   if(importTxs.length === 0){
-    previewList.innerHTML = '<div class="warn-box" style="background:#fee2e2;color:#991b1b"><div class="title"><span>❌ مفيش بيانات اتقرأت</span></div><div>جرب تكتب في السطر كده:<br><b>الاسم | النوع | المبلغ</b><br>مثال: <code>عميل1 | فاتورة | 20000</code></div></div>';
+    previewList.innerHTML = '<div class="warn-box" style="background:#fee2e2;color:#991b1b"><div class="title"><span>❌ مفيش بيانات اتقرأت</span></div><div>جرب تكتب في السطر كده:<br><b>الاسم | النوع | المبلغ</b><br>مثال: <code>المرسي | فاتورة | 20000</code></div></div>';
     return;
   }
   
@@ -2738,82 +3069,278 @@ function saveImport(){
 }
 
 function renderClose(){
-  const cash=parseFloat(document.getElementById('closeCash').value);
-  const wallet=parseFloat(document.getElementById('closeWallet').value);
-  if(isNaN(cash)&&isNaN(wallet)){document.getElementById('closePreview').innerHTML='';return}
-  const today=new Date().toISOString().split('T')[0];
-  const d=load();
-  const lastClose=d.closes&&d.closes.length?d.closes[d.closes.length-1]:null;
-  const cd=lastClose?lastClose.date:'1970-01-01';
-  const lc=lastClose?lastClose.cash:0;
-  const lw=lastClose?lastClose.wallet:0;
-  let cin=0,cout=0,win=0,sup=0;
-  d.txs.forEach(function(t){
-    if(t.date<=cd) return;
-    if(t.type==='credit_cash'||t.type==='credit_insta') cin+=t.amount;
-    else if(t.type==='debit'||t.type==='cash_sale') cout+=t.amount;
-    else if(t.type==='credit_wallet') win+=t.amount;
+  const date = globalDate || new Date().toISOString().split('T')[0];
+  const d = load();
+  
+  // نحدّث التاريخ
+  const dl = document.getElementById('closeDateLabel');
+  if(dl) dl.textContent = date;
+  
+  // ===== 1) اللي الأبلكيشن سجله =====
+  const dayTxs = (d.txs || []).filter(function(t){ return t.date === date; });
+  const rCash = dayTxs.filter(function(t){ return t.type === 'credit_cash'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const rWallet = dayTxs.filter(function(t){ return t.type === 'credit_wallet'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const rInsta = dayTxs.filter(function(t){ return t.type === 'credit_insta'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const rCredit = dayTxs.filter(function(t){ return t.type === 'debit' && !t.outsideMabdala; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const rCashInv = dayTxs.filter(function(t){ return t.type === 'cash_sale'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const rMuj = dayTxs.filter(function(t){ return t.type === 'mujannab'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  
+  const supplies = (d.company && d.company.supplies || []).filter(function(s){ return s.date === date; });
+  const rSupply = supplies.reduce(function(a,s){ return a+s.amount; }, 0);
+  
+  const mubs = (d.company && d.company.mubadalas || []).filter(function(m){ return m.date === date; });
+  const rMub = mubs.reduce(function(a,m){ return a+m.amount; }, 0);
+  
+  const setTxt = function(id, v){ const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt('rCash', fmt(rCash) + ' ج');
+  setTxt('rWallet', fmt(rWallet) + ' ج');
+  setTxt('rInsta', fmt(rInsta) + ' ج');
+  setTxt('rCredit', fmt(rCredit) + ' ج');
+  setTxt('rCashInv', fmt(rCashInv) + ' ج');
+  setTxt('rMujannab', fmt(rMuj) + ' ج');
+  setTxt('rSupply', fmt(rSupply) + ' ج');
+  setTxt('rMub', fmt(rMub) + ' ج');
+  
+  // ===== 2) المديونيات =====
+  const b = computeBalances(date);
+  let clientsDebt = 0;
+  Object.keys(b).forEach(function(name){
+    const c = b[name];
+    if(c.type !== 'client') return;
+    if(name === 'شركة (فاتورة عامة)') return;
+    const bal = c.debit - c.credit;
+    if(bal > 0) clientsDebt += bal;
   });
-  const c=getCompany();
-  (c.supplies||[]).forEach(function(s){if(s.date>cd&&s.date<=today) sup+=s.amount;});
-  const ec=lc+cin-cout-sup;
-  const ew=lw+win;
-  const dc=(cash||0)-ec;
-  const dw=(wallet||0)-ew;
-  const td=dc+dw;
-  let cls='ok',title='✅ مطابق';
-  if(Math.abs(td)>0.5){if(Math.abs(td)<100){cls='warn';title='⚠️ فرق بسيط'}else{cls='';title='🚨 فرق كبير!'}}
-  document.getElementById('closePreview').innerHTML='<div class="warn-box '+cls+'">'+
-    '<div class="title"><span>'+title+'</span><span>'+(td>=0?'+':'')+fmt(td)+' ج</span></div>'+
-    '<div class="row"><span>📊 متوقع كاش</span><span>'+fmt(ec)+'</span></div>'+
-    '<div class="row"><span>💵 فعلي كاش</span><span>'+fmt(cash||0)+'</span></div>'+
-    '<div class="row"><span>📊 متوقع محافظ</span><span>'+fmt(ew)+'</span></div>'+
-    '<div class="row"><span>💼 فعلي محافظ</span><span>'+fmt(wallet||0)+'</span></div>'+
-  '</div>';
+  
+  let supDebt = 0;
+  (d.supTxs || []).forEach(function(t){
+    if(t.date > date) return;
+    if(t.type === 'purchase') supDebt += t.amount;
+    else if(t.type === 'payment') supDebt -= t.amount;
+    else if(t.type === 'return') supDebt -= t.amount;
+  });
+  supDebt = Math.max(0, supDebt);
+  
+  let totalInvoicesUpToDate = 0;
+  (d.txs || []).forEach(function(t){
+    if(t.date > date) return;
+    if(t.type === 'debit' && !t.outsideMabdala) totalInvoicesUpToDate += t.amount;
+  });
+  let totalSupplyUpToDate = 0;
+  (d.company && d.company.supplies || []).forEach(function(s){
+    if(s.date <= date) totalSupplyUpToDate += s.amount;
+  });
+  const compDebt = Math.max(0, totalInvoicesUpToDate - totalSupplyUpToDate);
+  
+  const totalDebt = clientsDebt + supDebt + compDebt;
+  
+  setTxt('rClientsDebt', fmt(clientsDebt) + ' ج');
+  setTxt('rSupDebt', fmt(supDebt) + ' ج');
+  setTxt('rCompDebt', fmt(compDebt) + ' ج');
+  setTxt('rTotalDebt', fmt(totalDebt) + ' ج');
+  
+  // ===== 3) مقارنة يدوي بالفعل =====
+  const cash = parseFloat((document.getElementById('closeCash') || {}).value) || 0;
+  const wallet = parseFloat((document.getElementById('closeWallet') || {}).value) || 0;
+  const marketDebt = parseFloat((document.getElementById('closeMarketDebt') || {}).value) || 0;
+  
+  const preview = document.getElementById('closePreview');
+  if(!preview) return;
+  
+  if(cash === 0 && wallet === 0 && marketDebt === 0){
+    preview.innerHTML = '';
+    return;
+  }
+  
+  const appCash = rCash;
+  const appWallet = rWallet + rInsta;
+  const diffCash = cash - appCash;
+  const diffWallet = wallet - appWallet;
+  const diffMarket = marketDebt - clientsDebt;
+  const totalActual = cash + wallet;
+  const totalApp = appCash + appWallet;
+  const totalDiff = totalActual - totalApp;
+  
+  const mkRow = function(label, actual, app, diff){
+    const color = Math.abs(diff) < 0.5 ? '#065f46' : (Math.abs(diff) < 500 ? '#d97706' : '#dc2626');
+    return '<div class="row"><span>' + label + '</span><span style="color:' + color + ';font-weight:bold">' +
+      fmt(actual) + ' / ' + fmt(app) + ' (' + (diff >= 0 ? '+' : '') + fmt(diff) + ')</span></div>';
+  };
+  
+  let cls = 'ok';
+  let title = '✅ مطابق';
+  if(Math.abs(totalDiff) > 0.5){
+    if(Math.abs(totalDiff) < 500){ cls = 'warn'; title = '⚠️ فرق بسيط'; }
+    else { cls = ''; title = '🚨 فرق كبير!'; }
+  }
+  
+  preview.innerHTML =
+    '<div class="card warn-box ' + cls + '" style="margin-bottom:12px">' +
+      '<div class="title"><span>' + title + '</span></div>' +
+      '<div style="font-size:12px;opacity:.8;margin-bottom:8px">(الفعلي / الأبلكيشن / الفرق)</div>' +
+      mkRow('💵 الكاش', cash, appCash, diffCash) +
+      mkRow('💳 المحافظ', wallet, appWallet, diffWallet) +
+      mkRow('📊 أجل السوق', marketDebt, clientsDebt, diffMarket) +
+      '<div class="row" style="font-size:15px;padding-top:8px;border-top:2px solid rgba(0,0,0,.1)"><span>💰 إجمالي الفلوس</span><span>' +
+        fmt(totalActual) + ' / ' + fmt(totalApp) + ' (' + (totalDiff >= 0 ? '+' : '') + fmt(totalDiff) + ')</span></div>' +
+    '</div>';
 }
 
+
+
+
+
 function saveClose(){
-  const cash=parseFloat(document.getElementById('closeCash').value);
-  const wallet=parseFloat(document.getElementById('closeWallet').value);
-  if(isNaN(cash)&&isNaN(wallet)){alert('ادخل الفلوس');return}
-  const d=load();
-  const today=new Date().toISOString().split('T')[0];
-  const lastClose=d.closes&&d.closes.length?d.closes[d.closes.length-1]:null;
-  const cd=lastClose?lastClose.date:'1970-01-01';
-  const lc=lastClose?lastClose.cash:0;
-  const lw=lastClose?lastClose.wallet:0;
-  let cin=0,cout=0,win=0,sup=0;
-  d.txs.forEach(function(t){
-    if(t.date<=cd) return;
-    if(t.type==='credit_cash'||t.type==='credit_insta') cin+=t.amount;
-    else if(t.type==='debit'||t.type==='cash_sale') cout+=t.amount;
-    else if(t.type==='credit_wallet') win+=t.amount;
+  const date = globalDate || new Date().toISOString().split('T')[0];
+  const d = load();
+  
+  const cash = parseFloat((document.getElementById('closeCash') || {}).value) || 0;
+  const wallet = parseFloat((document.getElementById('closeWallet') || {}).value) || 0;
+  const marketDebt = parseFloat((document.getElementById('closeMarketDebt') || {}).value) || 0;
+  const note = ((document.getElementById('closeNote') || {}).value || '').trim();
+  
+  if(cash === 0 && wallet === 0 && marketDebt === 0){
+    alert('ادخل بيانات على الأقل');
+    return;
+  }
+  
+  // نحسب snapshot كامل
+  const dayTxs = (d.txs || []).filter(function(t){ return t.date === date; });
+  const appCash = dayTxs.filter(function(t){ return t.type === 'credit_cash'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appWallet = dayTxs.filter(function(t){ return t.type === 'credit_wallet'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appInsta = dayTxs.filter(function(t){ return t.type === 'credit_insta'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appCredit = dayTxs.filter(function(t){ return t.type === 'debit' && !t.outsideMabdala; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appCashInv = dayTxs.filter(function(t){ return t.type === 'cash_sale'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appMuj = dayTxs.filter(function(t){ return t.type === 'mujannab'; }).reduce(function(a,t){ return a+t.amount; }, 0);
+  const appSupply = (d.company && d.company.supplies || []).filter(function(s){ return s.date === date; }).reduce(function(a,s){ return a+s.amount; }, 0);
+  const appMub = (d.company && d.company.mubadalas || []).filter(function(m){ return m.date === date; }).reduce(function(a,m){ return a+m.amount; }, 0);
+  
+  const b = computeBalances(date);
+  let clientsDebt = 0;
+  Object.keys(b).forEach(function(name){
+    const c = b[name];
+    if(c.type !== 'client') return;
+    if(name === 'شركة (فاتورة عامة)') return;
+    const bal = c.debit - c.credit;
+    if(bal > 0) clientsDebt += bal;
   });
-  const c=getCompany();
-  (c.supplies||[]).forEach(function(s){if(s.date>cd&&s.date<=today) sup+=s.amount;});
-  const ec=lc+cin-cout-sup;
-  const ew=lw+win;
-  const dc=(cash||0)-ec;
-  const dw=(wallet||0)-ew;
-  d.closes=d.closes||[];
-  d.closes.push({date:today,cash:cash||0,wallet:wallet||0,diffCash:dc,diffWallet:dw});
+  
+  let supDebt = 0;
+  (d.supTxs || []).forEach(function(t){
+    if(t.date > date) return;
+    if(t.type === 'purchase') supDebt += t.amount;
+    else if(t.type === 'payment') supDebt -= t.amount;
+    else if(t.type === 'return') supDebt -= t.amount;
+  });
+  supDebt = Math.max(0, supDebt);
+  
+  let invUpTo = 0;
+  (d.txs || []).forEach(function(t){
+    if(t.date > date) return;
+    if(t.type === 'debit' && !t.outsideMabdala) invUpTo += t.amount;
+  });
+  let supUpTo = 0;
+  (d.company && d.company.supplies || []).forEach(function(s){
+    if(s.date <= date) supUpTo += s.amount;
+  });
+  const compDebt = Math.max(0, invUpTo - supUpTo);
+  
+  const snapshot = {
+    date: date,
+    savedAt: new Date().toISOString(),
+    app: {
+      cash: appCash, wallet: appWallet, insta: appInsta,
+      credit: appCredit, cashInv: appCashInv, muj: appMuj,
+      supply: appSupply, mub: appMub
+    },
+    actual: { cash: cash, wallet: wallet, marketDebt: marketDebt },
+    debts: { clients: clientsDebt, suppliers: supDebt, company: compDebt, total: clientsDebt + supDebt + compDebt },
+    diff: {
+      cash: cash - appCash,
+      wallet: wallet - (appWallet + appInsta),
+      market: marketDebt - clientsDebt,
+      total: (cash + wallet) - (appCash + appWallet + appInsta)
+    },
+    note: note
+  };
+  
+  d.closes = d.closes || [];
+  d.closes.push(snapshot);
   save(d);
-  document.getElementById('closeCash').value='';
-  document.getElementById('closeWallet').value='';
-  document.getElementById('closePreview').innerHTML='';
-  alert('✅');
+  
+  document.getElementById('closeCash').value = '';
+  document.getElementById('closeWallet').value = '';
+  document.getElementById('closeMarketDebt').value = '';
+  document.getElementById('closeNote').value = '';
+  document.getElementById('closePreview').innerHTML = '';
+  
+  alert('✅ اتحفظ تقرير يوم ' + date);
   renderCloseList();
 }
 
+
+
+
+
 function renderCloseList(){
-  const d=load();
-  const closes=(d.closes||[]).slice().reverse();
-  document.getElementById('closeList').innerHTML=closes.map(function(c){
-    const td=c.diffCash+c.diffWallet;
-    const cls=Math.abs(td)<0.5?'ok':(Math.abs(td)<100?'warn':'');
-    return '<div class="warn-box '+cls+'"><div class="title"><span>📅 '+c.date+'</span><span>'+(td>=0?'+':'')+fmt(td)+'</span></div><div class="row"><span>💵 كاش</span><span>'+fmt(c.cash)+'</span></div><div class="row"><span>💼 محافظ</span><span>'+fmt(c.wallet)+'</span></div></div>';
-  }).join('')||'<div class="empty">مفيش إغلاقات</div>';
+  const d = load();
+  const closes = (d.closes || []).slice().reverse();
+  const listEl = document.getElementById('closeList');
+  if(!listEl) return;
+  
+  if(closes.length === 0){
+    listEl.innerHTML = '<div class="empty">مفيش تقارير سابقة</div>';
+    return;
+  }
+  
+  listEl.innerHTML = closes.map(function(c, idx){
+    const app = c.app || {};
+    const act = c.actual || {};
+    const debts = c.debts || {};
+    const diff = c.diff || {};
+    
+    const totalDiff = diff.total || 0;
+    let cls = 'ok';
+    let title = '✅ مطابق';
+    if(Math.abs(totalDiff) > 0.5){
+      if(Math.abs(totalDiff) < 500){ cls = 'warn'; title = '⚠️ فرق بسيط'; }
+      else { cls = ''; title = '🚨 فرق كبير'; }
+    }
+    
+    return '<div class="card" style="border-right:4px solid ' + (cls === 'ok' ? '#4a5d23' : (cls === 'warn' ? '#d97706' : '#dc2626')) + ';padding:12px;margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<b style="color:#4a5d23">📅 ' + (c.date || 'غير محدد') + '</b>' +
+        '<span style="font-size:12px;color:' + (cls === 'ok' ? '#065f46' : (cls === 'warn' ? '#d97706' : '#dc2626')) + '">' + title + '</span>' +
+      '</div>' +
+      
+      '<div style="background:#f7f9f2;border-radius:8px;padding:10px;margin-bottom:8px">' +
+        '<div style="font-size:12px;color:#4a5d23;font-weight:bold;margin-bottom:6px">📱 الأبلكيشن سجل</div>' +
+        '<div style="font-size:12px;color:#475569">💰 كاش: ' + fmt(app.cash || 0) + ' | 💳 محافظ: ' + fmt(app.wallet || 0) + ' | 📸 انستا: ' + fmt(app.insta || 0) + '</div>' +
+        '<div style="font-size:12px;color:#475569">📤 آجلة: ' + fmt(app.credit || 0) + ' | 💵 كاش: ' + fmt(app.cashInv || 0) + '</div>' +
+        '<div style="font-size:12px;color:#475569">📥 توريدات: ' + fmt(app.supply || 0) + ' | 💰 مبادلات: ' + fmt(app.mub || 0) + '</div>' +
+      '</div>' +
+      
+      '<div style="background:#f0f9ff;border-radius:8px;padding:10px;margin-bottom:8px">' +
+        '<div style="font-size:12px;color:#0c4a6e;font-weight:bold;margin-bottom:6px">✍️ سجلت يدوياً</div>' +
+        '<div style="font-size:12px;color:#475569">💵 كاش: ' + fmt(act.cash || 0) + ' | 💳 محافظ: ' + fmt(act.wallet || 0) + '</div>' +
+        '<div style="font-size:12px;color:#475569">📊 أجل السوق: ' + fmt(act.marketDebt || 0) + '</div>' +
+      '</div>' +
+      
+      '<div style="background:#fff5f5;border-radius:8px;padding:10px;margin-bottom:8px">' +
+        '<div style="font-size:12px;color:#991b1b;font-weight:bold;margin-bottom:6px">📊 المديونيات</div>' +
+        '<div style="font-size:12px;color:#475569">👥 عملاء: ' + fmt(debts.clients || 0) + ' | 🏭 موردين: ' + fmt(debts.suppliers || 0) + '</div>' +
+        '<div style="font-size:12px;color:#475569">🏢 شركة: ' + fmt(debts.company || 0) + ' | <b>📊 إجمالي: ' + fmt(debts.total || 0) + '</b></div>' +
+      '</div>' +
+      
+      '<div style="font-size:12px;color:#64748b">🎯 الفرق: <b style="color:' + (Math.abs(totalDiff) < 0.5 ? '#065f46' : (Math.abs(totalDiff) < 500 ? '#d97706' : '#dc2626')) + '">' + (totalDiff >= 0 ? '+' : '') + fmt(totalDiff) + ' ج</b></div>' +
+      (c.note ? '<div style="font-size:12px;color:#64748b;margin-top:4px">📝 ' + c.note + '</div>' : '') +
+    '</div>';
+  }).join('');
 }
+
+
+
+
 
 function runAudit(){
   const d=load();
@@ -2922,48 +3449,25 @@ function importBackup(input){
 }
 
 function resetNumbers(){
-  if(!confirm('⚠️ هيتم تصفير كل الأرقام:\n\n' +
-    '• كل المعاملات هتتمسح\n' +
-    '• كل التوريدات هتتمسح\n' +
-    '• كل المبادلات هتتمسح\n' +
-    '• الحد الائتماني يرجع 0\n\n' +
-    '✅ العملاء والموردين هيفضلوا موجودين\n\n' +
-    'متأكد؟')) return;
-  
-  if(!confirm('متأكد 100%؟ مفيش رجوع!')) return;
-  
+  if(!confirm('⚠️ هيتم تصفير الأرقام بس (العملاء هيفضلوا):\n\n• الفواتير\n• التحصيل\n• السلف\n• المصروفات\n• المحافظ\n• التسويات\n\nمتأكد؟')) return;
   const d = load();
-  
-  // نصفّر المعاملات
+  // سيب d.accounts زي ما هي ✅
   d.txs = [];
-  
-  // نصفّر معاملات الموردين
   d.supTxs = [];
-  
-  // نصفّر التوريدات والمبادلات والتسويات + الحد الائتماني
-  d.company = {
-    creditLimit: 0,
-    closeDay: 25,
-    supplies: [],
-    mubadalas: [],
-    adjustments: [],
-    mubadalaInitial: 0
-  };
-  
-  // نصفّر الإغلاقات
+  d.expenses = [];
+  d.loans = [];
+  d.supplierLoans = [];
+  d.personalLoans = [];
+  d.withdraws = [];
+  if(d.company){
+    d.company.supplies = [];
+    d.company.mubadalas = [];
+    d.company.adjustments = [];
+    d.company.mubadalaInitial = 0;
+  }
   d.closes = [];
-  
-  // نصفّر النوتات
-  d.notes = {};
-  
-  // نشيل العلم عشان نمنع إعادة تحميل البيانات
-  d.seeded = true;
-  
   save(d);
-  
-  alert('✅ تم تصفير كل الأرقام\n\nالعملاء والموردين موجودين بس الأرقام كلها صفر');
-  
-  // نرجع للوحة
+  alert('✅ الأرقام اتصفرت — العملاء لسه موجودين');
   location.reload();
 }
 
@@ -2993,27 +3497,29 @@ initData();
   location.reload();
 }
 
-function tab(t,el){
-  ['dash','today','dailyCollect','add','cust','collect','wallets','supplier','company','mujannab','import','close','audit','set'].forEach(function(x){
-    const e = document.getElementById(x+'Tab');
-    if(e) e.style.display = x===t ? 'block' : 'none';
+function tab(t, el){
+  var tabs = ['dash','today','dailyCollect','add','cust','collect','wallets','company','mujannab','import','close','audit','assistant','set','loans','pers','exp'];
+  tabs.forEach(function(x){
+    var e = document.getElementById(x + 'Tab');
+    if(e) e.style.display = (x === t) ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach(function(e){ e.classList.remove('active'); });
   if(el) el.classList.add('active');
-  
-  // نحدّث التاب اللي فتحناه
-  if(t==='dash'){ renderDash(); renderPosition(); renderNote('dashboard'); }
-  else if(t==='today') renderToday();
-  else if(t==='dailyCollect') renderDailyCollect();
-  else if(t==='add'){ fillAccountSelect(); updateType(); }
-  else if(t==='cust') renderAccounts();
-  else if(t==='collect') renderCollect();
-  else if(t==='supplier') renderSuppliers();
-  else if(t==='company'){ renderCompany(); renderNote('company'); }
-  else if(t==='mujannab') renderMujannab();
-  else if(t==='close') renderCloseList();
-  else if(t==='audit') runAudit();
-  else if(t==='set') renderAccManage();
+  if(t==='dash'){ if(typeof renderDash==='function') renderDash(); if(typeof renderPosition==='function') renderPosition(); if(typeof renderNote==='function') renderNote('dashboard'); }
+  else if(t==='today'){ if(typeof renderToday==='function') renderToday(); }
+  else if(t==='dailyCollect'){ if(typeof renderDailyCollect==='function') renderDailyCollect(); }
+  else if(t==='add'){ if(typeof fillAccountSelect==='function') fillAccountSelect(); if(typeof updateType==='function') updateType(); }
+  else if(t==='cust'){ if(typeof renderAccounts==='function') renderAccounts(); }
+  else if(t==='collect'){ if(typeof renderCollect==='function') renderCollect(); }
+  else if(t==='company'){ if(typeof renderCompany==='function') renderCompany(); if(typeof renderNote==='function') renderNote('company'); }
+  else if(t==='mujannab'){ if(typeof renderMujannab==='function') renderMujannab(); }
+  else if(t==='close'){ if(typeof renderClose==='function') renderClose(); if(typeof renderCloseList==='function') renderCloseList(); }
+  else if(t==='audit'){ if(typeof runAudit==='function') runAudit(); }
+  else if(t==='set'){ if(typeof renderAccManage==='function') renderAccManage(); }
+  else if(t==='wallets'){ if(typeof renderWallets==='function') renderWallets(); }
+  else if(t==='loans'){ if(typeof renderLoansTab==='function') renderLoansTab(); }
+  else if(t==='pers'){ if(typeof renderPers==='function') renderPers(); }
+  else if(t==='exp'){ if(typeof renderExpOther==='function') renderExpOther(); }
 }
 
 function exportCSV(){
@@ -3052,7 +3558,7 @@ function migrateMubadala(){
 
   // نحط رصيد المبادلة في الشركة
   if(!d.company) d.company = {creditLimit:1250000, closeDay:25, supplies:[]};
-  if(!d.company.mubadalaInitial) d.company.mubadalaInitial = 0;
+  if(!d.company.mubadalaInitial) d.company.mubadalaInitial = 937457.94;
 
   d.migrated_v7 = true;
   save(d);
@@ -3070,6 +3576,313 @@ document.getElementById('globalDate').value = globalDate;
 updateDateLabel();
 fillAccountSelect();
 renderDash();
+
+// ===== المساعد الذكي =====
+function getDashData(){
+  const d = load();
+  return {
+    txs: d.txs || [],
+    accounts: d.accounts || [],
+    supTxs: d.supTxs || [],
+    company: d.company || {},
+  };
+}
+
+function showAIStatus(msg){
+  const s = document.getElementById('aiStatus');
+  s.style.display = 'block';
+  s.textContent = msg;
+}
+
+function hideAIStatus(){
+  document.getElementById('aiStatus').style.display = 'none';
+}
+
+function showAIResult(text){
+  document.getElementById('aiResult').style.display = 'block';
+  document.getElementById('aiResultBody').textContent = text;
+}
+
+function clearAI(){
+  document.getElementById('aiResult').style.display = 'none';
+  document.getElementById('aiClientPicker').style.display = 'none';
+  document.getElementById('aiResultBody').textContent = '';
+  hideAIStatus();
+}
+
+
+// ============== المساعد الذكي المحلي ==============
+function _aiAnalyzeData(){
+  const d = load();
+  const n = (typeof computeAllNumbers === 'function') ? computeAllNumbers() : {};
+  const b = (typeof computeBalances === 'function') ? computeBalances(globalDate) : {};
+  const clients = [];
+  const late = [];
+  let totalOwed = 0, totalLate = 0, topClient = null, topOwed = 0;
+  Object.keys(b).forEach(function(name){
+    const c = b[name];
+    if(c.type !== 'client') return;
+    if(c.balance > 0){
+      clients.push({name: name, owed: c.balance, lateDays: c.lateDays || 0, lastDate: c.lastDate});
+      totalOwed += c.balance;
+      if(c.balance > topOwed){ topOwed = c.balance; topClient = {name: name, owed: c.balance}; }
+      if((c.lateDays || 0) > 14){ late.push({name: name, owed: c.balance, days: c.lateDays}); totalLate += c.balance; }
+    }
+  });
+  clients.sort(function(a,b){ return b.owed - a.owed; });
+  late.sort(function(a,b){ return b.days - a.days; });
+  return {
+    cash: n.myCash || 0,
+    netWorth: n.netWorth || 0,
+    clientsOwe: n.clientsOwe || 0,
+    companyDebt: n.companyDebt || 0,
+    supOwed: n.supOwed || 0,
+    loansOnMe: n.loansOnMe || 0,
+    loansToMe: n.loansToMe || 0,
+    persTotal: n.persTotal || 0,
+    totalClients: clients.length,
+    totalOwed: totalOwed,
+    totalLate: totalLate,
+    lateCount: late.length,
+    topClient: topClient,
+    top5: clients.slice(0, 5),
+    lateTop: late.slice(0, 5),
+    txCount: (d.txs||[]).length,
+    exps: (d.expenses||[]).length,
+    loans: (d.loans||[]).length
+  };
+}
+
+function _aiStatusReport(){
+  const a = _aiAnalyzeData();
+  let s = '📊 **تحليل سريع**\n\n';
+  s += '💰 الكاش: ' + fmt(a.cash) + ' ج\n';
+  s += '👥 عملاء مدينين: ' + a.totalClients + ' شخص — إجمالي ' + fmt(a.totalOwed) + ' ج\n';
+  s += '⏰ متأخرين: ' + a.lateCount + ' شخص — إجمالي ' + fmt(a.totalLate) + ' ج\n';
+  s += '🏢 عليّا للشركة: ' + fmt(a.companyDebt) + ' ج\n';
+  s += '💼 سلف (لجتني): ' + fmt(a.loansOnMe) + ' ج\n';
+  s += '💼 سلف (أديتها): ' + fmt(a.loansToMe) + ' ج\n';
+  s += '━━━━━━━━━━━━━━\n';
+  if(a.cash < 0){
+    s += '🚨 **تحذير:** الكاش بالسالب! محتاج تحصّل فوراً.\n';
+  } else if(a.cash < 5000){
+    s += '⚠️ الكاش قليل، حاول تحصّل من العملاء.\n';
+  } else {
+    s += '✅ الكاش في وضع مقبول.\n';
+  }
+  if(a.netWorth < 0){
+    s += '🆘 الصافي سلبي — لازم خطة إنقاذ.\n';
+  } else {
+    s += '✅ الصافي موجب: +' + fmt(a.netWorth) + ' ج\n';
+  }
+  return s;
+}
+
+function _aiTopClients(){
+  const a = _aiAnalyzeData();
+  if(!a.top5.length) return '📭 مفيش عملاء مدينين حالياً.';
+  let s = '🏆 **أكبر 5 عملاء مدينين:**\n\n';
+  a.top5.forEach(function(c, i){
+    s += (i+1) + '. ' + c.name + ' — ' + fmt(c.owed) + ' ج';
+    if(c.lateDays > 14) s += ' ⏰ متأخر ' + c.lateDays + ' يوم';
+    s += '\n';
+  });
+  return s;
+}
+
+function _aiLateClients(){
+  const a = _aiAnalyzeData();
+  if(!a.lateTop.length) return '✅ **مفيش عملاء متأخرين.**';
+  let s = '⏰ **عملاء متأخرين عن السداد:**\n\n';
+  a.lateTop.forEach(function(c){
+    s += '🔴 ' + c.name + ' — ' + fmt(c.owed) + ' ج (متأخر ' + c.days + ' يوم)\n';
+  });
+  s += '\n💡 **اقتراح:** ابدأ بالاتصال بأعلى مبلغ.';
+  return s;
+}
+
+function _aiPredictMonth(){
+  const d = load();
+  if(!d.txs || !d.txs.length) return '📭 مفيش بيانات كافية للتوقع.';
+  const now = new Date();
+  const month = now.toISOString().slice(0,7);
+  let mDebit = 0, mCredit = 0, daysWithData = new Set();
+  d.txs.forEach(function(t){
+    if(t.date && t.date.slice(0,7) === month){
+      if(t.type === 'debit') mDebit += t.amount;
+      else if(t.type && t.type.indexOf('credit') === 0) mCredit += t.amount;
+      daysWithData.add(t.date);
+    }
+  });
+  const today = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const dailyAvg = today > 0 ? mDebit / today : 0;
+  const predicted = dailyAvg * daysInMonth;
+  let s = '📅 **توقع الشهر** (' + month + ')\n\n';
+  s += '📤 فواتير حتى اليوم: ' + fmt(mDebit) + ' ج\n';
+  s += '💰 تحصيل حتى اليوم: ' + fmt(mCredit) + ' ج\n';
+  s += '━━━━━━━━━━━━━━\n';
+  s += '📈 متوسط يومي: ' + fmt(dailyAvg) + ' ج\n';
+  s += '🔮 متوقع بنهاية الشهر: **' + fmt(predicted) + ' ج**\n';
+  return s;
+}
+
+function _aiAnswerFree(q){
+  q = (q||'').trim();
+  if(!q) return '❓ اكتب سؤالك الأول.';
+  const lq = q.toLowerCase();
+  const a = _aiAnalyzeData();
+  
+  if(lq.indexOf('كاش') >= 0 || lq.indexOf('سيول') >= 0 || lq.indexOf('فلوس') >= 0){
+    return '💰 **الكاش:** ' + fmt(a.cash) + ' ج\n\n' + (a.cash < 0 ? '🚨 بالسالب! لازم تتحرك فوراً.' : '✅ وضعك مقبول.');
+  }
+  if(lq.indexOf('متأخر') >= 0 || lq.indexOf('تأخير') >= 0){
+    return _aiLateClients();
+  }
+  if(lq.indexOf('أفضل') >= 0 || lq.indexOf('اكبر') >= 0 || lq.indexOf('أكبر') >= 0 || lq.indexOf('عملاء') >= 0){
+    return _aiTopClients();
+  }
+  if(lq.indexOf('شركة') >= 0 || lq.indexOf('مديون') >= 0){
+    return '🏢 **عليّا للشركة:** ' + fmt(a.companyDebt) + ' ج\n\n' + (a.companyDebt > 0 ? '📌 حاول تسدد جزء لتحسين الوضع.' : '✅ مش عليّا حاجة للشركة.');
+  }
+  if(lq.indexOf('سلف') >= 0 || lq.indexOf('مقرض') >= 0){
+    return '💼 **السلف:**\n\n💰 جتني: ' + fmt(a.loansOnMe) + ' ج\n💸 أديتها: ' + fmt(a.loansToMe) + ' ج\n⚖️ الصافي: ' + fmt(a.loansToMe - a.loansOnMe) + ' ج';
+  }
+  if(lq.indexOf('حلل') >= 0 || lq.indexOf('وضع') >= 0 || lq.indexOf('تقرير') >= 0){
+    return _aiStatusReport();
+  }
+  if(lq.indexOf('شهر') >= 0 || lq.indexOf('توقع') >= 0){
+    return _aiPredictMonth();
+  }
+  if(lq.indexOf('تحصيل') >= 0 || lq.indexOf('احسن') >= 0 || lq.indexOf('أحسن') >= 0){
+    return '💡 **نصايح للتحصيل:**\n\n' + _aiLateClients();
+  }
+  
+  return '🤔 مش فاهم السؤال. جرب:\n\n• "حلللي وضعي"\n• "أكبر العملاء"\n• "المتأخرين"\n• "توقع الشهر"\n• "الكاش"';
+}
+
+// ====== الدوال الجديدة اللي بتستبدل الـ fetch ======
+async function askAI(type){
+  const el = document.getElementById('aiResult');
+  if(el) el.textContent = '⏳ جاري التحليل...';
+  await new Promise(function(r){ setTimeout(r, 300); });
+  let out = '';
+  try{
+    if(type === 'status') out = _aiStatusReport();
+    else if(type === 'predict') out = _aiPredictMonth();
+    else if(type === 'client') out = _aiTopClients();
+    else out = _aiStatusReport();
+  }catch(e){ out = '❌ خطأ: ' + e.message; }
+  if(el){ el.textContent = out; el.style.whiteSpace = 'pre-wrap'; }
+  return out;
+}
+
+async function askAIClient(){
+  const el = document.getElementById('aiResult');
+  if(el) el.textContent = '⏳ جاري التحليل...';
+  await new Promise(function(r){ setTimeout(r, 300); });
+  let out = '';
+  try{ out = _aiTopClients(); }catch(e){ out = '❌ ' + e.message; }
+  if(el){ el.textContent = out; el.style.whiteSpace = 'pre-wrap'; }
+}
+
+async function askAIChat(){
+  const inp = document.getElementById('aiQuestion');
+  const el = document.getElementById('aiResult');
+  const q = inp ? inp.value : '';
+  if(el) el.textContent = '⏳ جاري التفكير...';
+  await new Promise(function(r){ setTimeout(r, 300); });
+  let out = '';
+  try{ out = _aiAnswerFree(q); }catch(e){ out = '❌ ' + e.message; }
+  if(el){ el.textContent = out; el.style.whiteSpace = 'pre-wrap'; }
+}
+// ============== نهاية المساعد المحلي ==============
+
+
+function showClientsForAI(){
+  const d = load();
+  const sel = document.getElementById('aiClientName');
+  const clients = (d.accounts || []).filter(function(a){ return a.type === 'client'; });
+  sel.innerHTML = clients.map(function(c){
+    return '<option value="' + c.name.replace(/"/g,'&quot;') + '">' + c.name + '</option>';
+  }).join('') || '<option>مفيش عملاء</option>';
+  document.getElementById('aiClientPicker').style.display = 'block';
+  document.getElementById('aiResult').style.display = 'none';
+}
+
+async function analyzeClient(){
+  const name = document.getElementById('aiClientName').value;
+  if(!name){ alert('اختار عميل'); return; }
+
+  showAIStatus('🤖 بيحلل عميل "' + name + '"...');
+  document.getElementById('aiResult').style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/ai/client', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({data: getDashData(), client: name}),
+    });
+    const data = await resp.json();
+    hideAIStatus();
+    showAIResult(data.result || '⚠️ مفيش رد');
+  } catch(e){
+    hideAIStatus();
+    showAIResult('❌ خطأ: ' + e.message);
+  }
+}
+
+async function askFree(){
+  const q = document.getElementById('aiQuestion').value.trim();
+  if(!q){ alert('اكتب سؤال'); return; }
+
+  showAIStatus('🤖 بيفكر في سؤالك...');
+  document.getElementById('aiResult').style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({data: getDashData(), message: q}),
+    });
+    const data = await resp.json();
+    hideAIStatus();
+    showAIResult(data.result || '⚠️ مفيش رد');
+  } catch(e){
+    hideAIStatus();
+    showAIResult('❌ خطأ: ' + e.message);
+  }
+}
+
+
+// ===== السلف =====
+window._lendersList = [];
+window._lenderEditIdx = -1;
+function getWalletAccounts(){ var d=load(); return (d.accounts||[]).filter(function(a){return a.type==='wallet';}); }
+function lenderMethodChanged(){ var m=document.getElementById('lenderMethod').value; var w=document.getElementById('lenderWalletWrap'); var s=document.getElementById('lenderWalletName'); if(m==='wallet'){w.style.display='block'; s.innerHTML=''; var accs=getWalletAccounts(); if(!accs.length){var o=document.createElement('option');o.value='';o.textContent='--';s.appendChild(o);} else accs.forEach(function(a){var o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o);});} else w.style.display='none'; }
+function openLenderModal(){ window._lenderEditIdx=-1; document.getElementById('lenderModal').style.display='flex'; document.getElementById('lenderTitle').textContent='➕ مقرض جديد'; document.getElementById('lenderNameWrap').style.display='block'; document.getElementById('lenderName').value=''; document.getElementById('lenderAmount').value=''; document.getElementById('lenderDir').value='in'; document.getElementById('lenderDate').value=new Date().toISOString().slice(0,10); document.getElementById('lenderMethod').value='cash'; lenderMethodChanged(); }
+function openLenderTx(i,dir){ var x=(window._lendersList||[])[i]; if(!x)return; window._lenderEditIdx=i; document.getElementById('lenderModal').style.display='flex'; document.getElementById('lenderTitle').textContent='💼 حركة لـ '+x.name; document.getElementById('lenderNameWrap').style.display='none'; document.getElementById('lenderAmount').value=''; document.getElementById('lenderDir').value=dir; document.getElementById('lenderDate').value=new Date().toISOString().slice(0,10); document.getElementById('lenderMethod').value='cash'; lenderMethodChanged(); }
+function closeLenderModal(){ document.getElementById('lenderModal').style.display='none'; }
+function saveLender(){ var name; if(window._lenderEditIdx>=0) name=(window._lendersList[window._lenderEditIdx]||{}).name; else name=(document.getElementById('lenderName').value||'').trim(); var amount=parseFloat(document.getElementById('lenderAmount').value||0); var direction=document.getElementById('lenderDir').value; var date=document.getElementById('lenderDate').value||new Date().toISOString().slice(0,10); var method=document.getElementById('lenderMethod').value; var walletName=method==='wallet'?(document.getElementById('lenderWalletName').value||''):''; if(!name){alert('اكتب الاسم');return;} if(!amount||amount<=0){alert('اكتب المبلغ');return;} var d=load(); if(!d.loans) d.loans=[]; d.loans.push({id:Date.now(),name:name,amount:amount,direction:direction,date:date,method:method,walletName:walletName}); save(d); closeLenderModal(); alert('✅'); renderLoansTab(); if(typeof refreshAll==='function') try{refreshAll();}catch(e){} }
+function renderLoansTab(){ var d=load(); var loans=d.loans||[]; var byName={}; loans.forEach(function(l){ if(!byName[l.name])byName[l.name]={name:l.name,toMe:0,onMe:0}; if(l.direction==='in')byName[l.name].onMe+=Number(l.amount||0); else byName[l.name].toMe+=Number(l.amount||0); }); var list=Object.values(byName); window._lendersList=list; var tTo=0,tOn=0; list.forEach(function(x){tTo+=x.toMe;tOn+=x.onMe;}); var S=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}; S('loansToMe',fmt(tTo)); S('loansOnMe',fmt(tOn)); S('loansNet',fmt(tTo-tOn)); var el=document.getElementById('lendersList'); if(!el)return; if(!list.length){el.innerHTML='<div style="text-align:center;color:#888;padding:30px">مفيش مقرضين</div>';return;} var html=''; list.forEach(function(x,i){ var net=x.toMe-x.onMe; var nc=net>=0?'#166534':'#991b1b'; html+='<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🏦 '+x.name+'</b><button onclick="delLender('+i+')" style="width:auto;padding:4px 8px;background:#dc2626;color:#fff;font-size:11px;margin:0">🗑</button></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px"><div style="background:#f0fdf4;padding:6px;border-radius:6px;text-align:center"><div style="font-size:10px;color:#166534">ليّا</div><div style="font-size:13px;font-weight:bold;color:#166534">'+fmt(x.toMe)+'</div></div><div style="background:#fef2f2;padding:6px;border-radius:6px;text-align:center"><div style="font-size:10px;color:#991b1b">عليّا</div><div style="font-size:13px;font-weight:bold;color:#991b1b">'+fmt(x.onMe)+'</div></div><div style="background:#f8fafc;padding:6px;border-radius:6px;text-align:center"><div style="font-size:10px;color:#334155">صافي</div><div style="font-size:13px;font-weight:bold;color:'+nc+'">'+fmt(net)+'</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><button onclick="openLenderTx('+i+',\'in\')" style="background:#92400e;color:#fff;padding:8px;font-size:12px">💰 اخدت</button><button onclick="openLenderTx('+i+',\'out\')" style="background:#4a5d23;color:#fff;padding:8px;font-size:12px">💸 اعطيت</button></div></div>'; }); el.innerHTML=html; }
+function delLender(i){ var x=(window._lendersList||[])[i]; if(!x)return; if(!confirm('هتحذف كل حركات '+x.name+'؟'))return; var d=load(); d.loans=(d.loans||[]).filter(function(l){return l.name!==x.name;}); save(d); renderLoansTab(); if(typeof refreshAll==='function') try{refreshAll();}catch(e){} }
+
+// ===== المصروفات =====
+function expMethodChanged(){ var m=document.getElementById('expMethod').value; var w=document.getElementById('expWalletWrap'); var s=document.getElementById('expWalletName'); if(m==='wallet'){w.style.display='block'; s.innerHTML=''; var accs=getWalletAccounts(); accs.forEach(function(a){var o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o);});} else w.style.display='none'; }
+function openExpModal(cat){ document.getElementById('expModal').style.display='flex'; document.getElementById('expTitle').textContent=cat==='personal'?'👤 سحب شخصي':'💸 إضافة مصروف'; document.getElementById('expName').value=''; document.getElementById('expAmount').value=''; document.getElementById('expCategory').value=cat||'operational'; document.getElementById('expMethod').value='cash'; document.getElementById('expDate').value=new Date().toISOString().slice(0,10); expMethodChanged(); }
+function closeExpModal(){ document.getElementById('expModal').style.display='none'; }
+function saveExp(){ var name=(document.getElementById('expName').value||'').trim(); var amount=parseFloat(document.getElementById('expAmount').value||0); var category=document.getElementById('expCategory').value; var method=document.getElementById('expMethod').value; var walletName=method==='wallet'?(document.getElementById('expWalletName').value||''):''; var date=document.getElementById('expDate').value||new Date().toISOString().slice(0,10); if(!name){alert('اكتب السبب');return;} if(!amount||amount<=0){alert('اكتب المبلغ');return;} var d=load(); if(!d.expenses)d.expenses=[]; d.expenses.push({id:Date.now(),name:name,amount:amount,category:category,method:method,walletName:walletName,date:date}); save(d); closeExpModal(); alert('✅'); renderPers(); renderExpOther(); if(typeof refreshAll==='function') try{refreshAll();}catch(e){} }
+function renderPers(){ var d=load(); var list=(d.expenses||[]).filter(function(e){return e.category==='personal';}); list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}); var total=0; list.forEach(function(e){total+=Number(e.amount||0);}); var tel=document.getElementById('persTotal'); if(tel)tel.textContent=fmt(total); var el=document.getElementById('persList'); if(!el)return; if(!list.length){el.innerHTML='<div style="text-align:center;color:#888;padding:20px">مفيش</div>';return;} var html=''; list.forEach(function(e){ var m=e.method==='cash'?'💵':(e.method==='wallet'?'📱':''); html+='<div class="card" style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>'+e.name+'</b><br><span style="font-size:11px;color:#666">'+m+' '+(e.date||'')+'</span></div><div style="font-weight:bold;color:#166534">'+fmt(e.amount)+'</div><button onclick="delExpense('+e.id+')" style="width:auto;padding:3px 8px;background:#dc2626;color:#fff;font-size:11px;margin:0 0 0 6px">🗑</button></div></div>'; }); el.innerHTML=html; }
+function renderExpOther(){ var d=load(); var list=(d.expenses||[]).filter(function(e){return e.category && e.category!=='personal';}); list.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}); var total=0; list.forEach(function(e){total+=Number(e.amount||0);}); var tel=document.getElementById('expTotal'); if(tel)tel.textContent=fmt(total); var el=document.getElementById('expList'); if(!el)return; if(!list.length){el.innerHTML='<div style="text-align:center;color:#888;padding:20px">مفيش</div>';return;} var html=''; list.forEach(function(e){ var m=e.method==='cash'?'💵':(e.method==='wallet'?'📱':''); html+='<div class="card" style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>'+e.name+'</b><br><span style="font-size:11px;color:#666">'+m+' '+(e.date||'')+'</span></div><div style="font-weight:bold;color:#991b1b">'+fmt(e.amount)+'</div><button onclick="delExpense('+e.id+')" style="width:auto;padding:3px 8px;background:#dc2626;color:#fff;font-size:11px;margin:0 0 0 6px">🗑</button></div></div>'; }); el.innerHTML=html; }
+function delExpense(id){ if(!confirm('حذف؟'))return; var d=load(); d.expenses=(d.expenses||[]).filter(function(e){return e.id!==id;}); save(d); renderPers(); renderExpOther(); if(typeof refreshAll==='function') try{refreshAll();}catch(e){} }
+
+// ===== السحب =====
+window._wdSource='cash'; window._wdCategory='';
+function openWithdraw(source){ window._wdSource=source; window._wdCategory=''; var t={cash:'💵 سحب كاش',wallet:'📱 سحب محفظة',insta:'⚡ سحب انستا'}; document.getElementById('wdTitle').textContent=t[source]||'💸'; document.getElementById('wdAmount').value=''; document.getElementById('wdReason').value=''; document.getElementById('wdDate').value=new Date().toISOString().slice(0,10); document.getElementById('wdBtnPers').style.background='#e5e7eb'; document.getElementById('wdBtnPers').style.borderColor='transparent'; document.getElementById('wdBtnOther').style.background='#e5e7eb'; document.getElementById('wdBtnOther').style.borderColor='transparent'; var w=document.getElementById('wdWalletWrap'); if(source==='wallet'){w.style.display='block'; var s=document.getElementById('wdWalletName'); s.innerHTML=''; getWalletAccounts().forEach(function(a){var o=document.createElement('option');o.value=a.name;o.textContent=a.name;s.appendChild(o);});} else w.style.display='none'; document.getElementById('withdrawModal').style.display='flex'; }
+function closeWithdraw(){ document.getElementById('withdrawModal').style.display='none'; }
+function wdPickCat(cat){ window._wdCategory=cat; if(cat==='personal'){ document.getElementById('wdBtnPers').style.background='#dcfce7'; document.getElementById('wdBtnPers').style.borderColor='#166534'; document.getElementById('wdBtnOther').style.background='#e5e7eb'; document.getElementById('wdBtnOther').style.borderColor='transparent'; } else { document.getElementById('wdBtnOther').style.background='#fee2e2'; document.getElementById('wdBtnOther').style.borderColor='#991b1b'; document.getElementById('wdBtnPers').style.background='#e5e7eb'; document.getElementById('wdBtnPers').style.borderColor='transparent'; } }
+function saveWithdraw(){ var amount=parseFloat(document.getElementById('wdAmount').value||0); var reason=(document.getElementById('wdReason').value||'').trim(); var date=document.getElementById('wdDate').value||new Date().toISOString().slice(0,10); var method=window._wdSource; var walletName=(method==='wallet')?(document.getElementById('wdWalletName').value||''):''; if(!window._wdCategory){alert('اختار النوع');return;} if(!amount||amount<=0){alert('اكتب المبلغ');return;} if(!reason){alert('اكتب السبب');return;} var d=load(); if(!d.expenses)d.expenses=[]; d.expenses.push({id:Date.now(),name:reason,amount:amount,category:window._wdCategory,method:method,walletName:walletName,date:date}); save(d); closeWithdraw(); alert('✅'); renderPers(); renderExpOther(); if(typeof refreshAll==='function') try{refreshAll();}catch(e){} }
+
 </script>
 
 <div id="supplierModal" class="modal" onclick="if(event.target.id==='supplierModal')closeSupplierModal()">
@@ -3094,5 +3907,141 @@ renderDash();
   </div>
 </div>
 
+
+<div id="lenderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;padding:18px;max-width:440px;width:100%;max-height:90vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b id="lenderTitle">➕ مقرض جديد</b><button onclick="closeLenderModal()" style="width:auto;padding:4px 10px;background:#eee;margin:0">✕</button></div>
+    <div id="lenderNameWrap"><label style="font-size:12px">اسم المقرض</label><input id="lenderName" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box"></div>
+    <label style="font-size:12px">المبلغ</label><input id="lenderAmount" type="number" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">الاتجاه</label><select id="lenderDir" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"><option value="in">💰 اخدت (عليّا)</option><option value="out">💸 اعطيت (ليّا)</option></select>
+    <label style="font-size:12px">التاريخ</label><input id="lenderDate" type="date" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">طريقة الدفع</label><select id="lenderMethod" onchange="lenderMethodChanged()" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"><option value="cash">💵 كاش</option><option value="wallet">📱 محفظة</option><option value="insta">⚡ انستا</option></select>
+    <div id="lenderWalletWrap" style="display:none"><label style="font-size:12px">المحفظة</label><select id="lenderWalletName" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"></select></div>
+    <button onclick="saveLender()" style="background:#92400e;color:#fff;padding:12px;width:100%;border:none;border-radius:8px;font-weight:bold">💾 حفظ</button>
+  </div>
+</div>
+
+<div id="expModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;padding:18px;max-width:440px;width:100%;max-height:90vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b id="expTitle">💸 إضافة مصروف</b><button onclick="closeExpModal()" style="width:auto;padding:4px 10px;background:#eee;margin:0">✕</button></div>
+    <label style="font-size:12px">السبب</label><input id="expName" placeholder="اكل، مواصلات..." style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">المبلغ</label><input id="expAmount" type="number" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">التصنيف</label><select id="expCategory" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"><option value="operational">🏢 تشغيلي (يزود العجز)</option><option value="personal">👤 شخصي (مايأثرش)</option><option value="supply">🏭 توريد للشركة</option><option value="asset">💎 رأس مال</option></select>
+    <label style="font-size:12px">الطريقة</label><select id="expMethod" onchange="expMethodChanged()" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"><option value="cash">💵 كاش</option><option value="wallet">📱 محفظة</option><option value="insta">⚡ انستا</option></select>
+    <div id="expWalletWrap" style="display:none"><label style="font-size:12px">المحفظة</label><select id="expWalletName" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"></select></div>
+    <label style="font-size:12px">التاريخ</label><input id="expDate" type="date" style="width:100%;padding:10px;margin:4px 0 14px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <button onclick="saveExp()" style="background:#dc2626;color:#fff;padding:12px;width:100%;border:none;border-radius:8px;font-weight:bold">💾 حفظ</button>
+  </div>
+</div>
+
+<div id="withdrawModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:14px;padding:18px;max-width:420px;width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b id="wdTitle">💵 سحب</b><button onclick="closeWithdraw()" style="width:auto;padding:4px 10px;background:#eee;margin:0">✕</button></div>
+    <div id="wdWalletWrap" style="display:none"><label style="font-size:12px">المحفظة</label><select id="wdWalletName" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px"></select></div>
+    <label style="font-size:12px">المبلغ</label><input id="wdAmount" type="number" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">النوع</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px">
+      <button id="wdBtnPers" onclick="wdPickCat('personal')" style="background:#e5e7eb;color:#333;padding:12px;border:2px solid transparent;border-radius:8px;font-weight:bold">👤 شخصي</button>
+      <button id="wdBtnOther" onclick="wdPickCat('operational')" style="background:#e5e7eb;color:#333;padding:12px;border:2px solid transparent;border-radius:8px;font-weight:bold">💸 مصروف</button>
+    </div>
+    <label style="font-size:12px">السبب</label><input id="wdReason" style="width:100%;padding:10px;margin:4px 0 10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <label style="font-size:12px">التاريخ</label><input id="wdDate" type="date" style="width:100%;padding:10px;margin:4px 0 14px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box">
+    <button onclick="saveWithdraw()" style="background:#0ea5e9;color:#fff;padding:12px;width:100%;border:none;border-radius:8px;font-weight:bold">💾 حفظ</button>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    try{ if(typeof renderDash==='function') renderDash(); }catch(e){}
+    try{ if(typeof renderPosition==='function') renderPosition(); }catch(e){}
+    try{ if(typeof renderWallets==='function') renderWallets(); }catch(e){}
+    try{ if(typeof renderLoansTab==='function') renderLoansTab(); }catch(e){}
+    try{ if(typeof renderPers==='function') renderPers(); }catch(e){}
+    try{ if(typeof renderExpOther==='function') renderExpOther(); }catch(e){}
+  }, 300);
+});
+</script>
+<!-- DIAG_START -->
+<div id="diagBox" style="position:fixed;top:0;left:0;right:0;background:#0f172a;color:#fff;padding:12px;z-index:999999;font-family:monospace;font-size:12px;max-height:50vh;overflow:auto;display:none">
+  <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+    <b>🔍 تشخيص</b>
+    <button onclick="document.getElementById('diagBox').style.display='none'" style="width:auto;padding:2px 8px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:inherit">✕</button>
+  </div>
+  <div id="diagContent">جاري الفحص...</div>
+</div>
+
+<button onclick="window.__diagRun && window.__diagRun()" style="position:fixed;bottom:130px;right:16px;width:48px;height:48px;border-radius:50%;background:#0f172a;color:#fff;font-size:20px;border:2px solid #fff;z-index:999998;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)">🔍</button>
+
+<script>
+window.__diagRun = function(){
+  var box = document.getElementById('diagBox');
+  var out = document.getElementById('diagContent');
+  box.style.display = 'block';
+  var html = '';
+  function line(label, val, ok){
+    var color = ok === true ? '#4ade80' : (ok === false ? '#f87171' : '#94a3b8');
+    html += '<div style="margin:4px 0"><span style="color:#64748b">' + label + ':</span> <span style="color:' + color + '">' + val + '</span></div>';
+  }
+  try{
+    // localStorage
+    var keys = Object.keys(localStorage);
+    line('مفاتيح المتصفح', keys.length + ' مفتاح', keys.length > 0);
+    html += '<div style="background:#1e293b;padding:6px;border-radius:4px;margin:6px 0;font-size:11px">' + keys.map(function(k){ return '• ' + k + ' (' + (localStorage.getItem(k)||'').length + 'حرف)'; }).join('<br>') + '</div>';
+    
+    // konnash_v6
+    var raw = localStorage.getItem('konnash_v6');
+    line('konnash_v6 موجود؟', raw ? '✅ موجود' : '❌ مفقود', !!raw);
+    if(raw){
+      line('حجم البيانات', raw.length + ' حرف', true);
+      try{
+        var d = JSON.parse(raw);
+        line('seeded', d.seeded ? '✅ true' : '❌ false/undefined', d.seeded === true);
+        line('عدد الحسابات (accounts)', (d.accounts||[]).length, (d.accounts||[]).length > 0);
+        line('عدد المعاملات (txs)', (d.txs||[]).length, (d.txs||[]).length > 0);
+        line('عدد السلف (loans)', (d.loans||[]).length);
+        line('عدد المصروفات (expenses)', (d.expenses||[]).length);
+        line('عدد العملاء (type=client)', (d.accounts||[]).filter(function(a){return a.type==='client';}).length);
+        
+        // عرض أسماء العملاء
+        var clients = (d.accounts||[]).filter(function(a){return a.type==='client';});
+        if(clients.length){
+          html += '<div style="background:#1e293b;padding:6px;border-radius:4px;margin:6px 0;font-size:11px"><b>أسماء العملاء:</b><br>' + clients.slice(0,10).map(function(c){return '• '+c.name;}).join('<br>') + (clients.length>10?'<br>...و'+(clients.length-10)+' كمان':'') + '</div>';
+        }
+      }catch(e){
+        line('⚠️ خطأ في قراءة JSON', e.message, false);
+      }
+    } else {
+      html += '<div style="background:#7f1d1d;padding:8px;border-radius:4px;color:#fff;margin:6px 0">⚠️ لا يوجد konnash_v6 في المتصفح — البيانات اتمسحت</div>';
+    }
+    
+    // متى آخر حفظ؟
+    line('صفحة URL', window.location.href, null);
+    line('globalDate', (typeof globalDate !== 'undefined') ? globalDate : 'undefined');
+    
+  }catch(e){
+    html += '<div style="color:#f87171">❌ خطأ عام: ' + e.message + '</div>';
+  }
+  out.innerHTML = html;
+};
+setTimeout(function(){ try{ window.__diagRun(); }catch(e){} }, 800);
+
+// === Migration: تصحيح الفواتير الكاش القديمة ===
+function _fixCashSales(){
+  const d = load();
+  if(d._cashFix_v1) return;
+  let fixed = 0;
+  (d.txs||[]).forEach(function(t){
+    if(t.type === 'cash_sale' && t._wasCountedAsCredit !== false){
+      // علامة إننا راجعناها
+      t._wasCountedAsCredit = false;
+    }
+  });
+  d._cashFix_v1 = true;
+  save(d);
+}
+
+</script>
+<!-- DIAG_END -->
 </body>
 </html>
