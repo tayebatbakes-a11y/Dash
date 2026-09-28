@@ -978,6 +978,66 @@ function saveNewSupplier(){
 
 
 
+function toggleCompPayMethod(){
+  var t = document.getElementById('compTxType');
+  var w = document.getElementById('compPayMethodWrap');
+  if(!t || !w) return;
+  if(t.value === 'supply'){
+    w.style.display = 'block';
+    fillCompWallets();
+    fillCompClients();
+  } else {
+    w.style.display = 'none';
+  }
+}
+function toggleCompPay(){
+  var m = document.getElementById('compPayMethod');
+  if(!m) return;
+  var w = document.getElementById('compWalletWrap');
+  var cl = document.getElementById('compClientWrap');
+  if(w) w.style.display = (m.value === 'wallet') ? 'block' : 'none';
+  if(cl) cl.style.display = (m.value === 'client') ? 'block' : 'none';
+  if(m.value === 'wallet') fillCompWallets();
+  if(m.value === 'client') fillCompClients();
+}
+function fillCompWallets(){
+  var sel = document.getElementById('compWalletSelect');
+  if(!sel) return;
+  var d = load();
+  sel.innerHTML = '';
+  var wallets = (d.accounts || []).filter(function(a){ return a.type === 'wallet'; });
+  if(wallets.length === 0){
+    var o = document.createElement('option');
+    o.value = ''; o.textContent = '-- مفيش محافظ --';
+    sel.appendChild(o);
+    return;
+  }
+  wallets.forEach(function(a){
+    var o = document.createElement('option');
+    o.value = a.name; o.textContent = a.name;
+    sel.appendChild(o);
+  });
+}
+function fillCompClients(){
+  var sel = document.getElementById('compClientSelect');
+  if(!sel) return;
+  var d = load();
+  sel.innerHTML = '';
+  var clients = (d.accounts || []).filter(function(a){ return a.type === 'client'; });
+  if(clients.length === 0){
+    var o = document.createElement('option');
+    o.value = ''; o.textContent = '-- مفيش عملاء --';
+    sel.appendChild(o);
+    return;
+  }
+  clients.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'', 'ar'); });
+  clients.forEach(function(a){
+    var o = document.createElement('option');
+    o.value = a.name; o.textContent = a.name;
+    sel.appendChild(o);
+  });
+}
+
 function addCompanyTx(){
   const type = document.getElementById('compTxType').value;
   const date = document.getElementById('compTxDate').value || new Date().toISOString().split('T')[0];
