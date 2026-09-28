@@ -1717,7 +1717,7 @@ function renderPosition(){
 
   // ===== الخصوم =====
   setTxt('negCompany', fmt(n.companyDebt) + ' ج');
-  setTxt('negSuppliers', fmt(n.supOwed) + ' ج');
+  setTxt('negSuppliers', fmt(n.supOwed + n.loansOnMe) + ' ج');
   setTxt('negTotal', fmt(n.liabilities) + ' ج');
   setTxt('totalMyDebt', fmt(n.liabilities) + ' ج');
   setTxt('posClientsTotal', fmt(n.clientsOwe) + ' ج');
