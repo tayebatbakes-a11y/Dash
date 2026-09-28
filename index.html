@@ -515,23 +515,28 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
         💡 اختار نوع المعاملة: توريد (بتدفع للشركة) أو فاتورة (بتحصل من السوق)
       </div>
       <label>النوع</label>
-      <select id="compTxType">
+      <select id="compTxType" onchange="toggleCompPayMethod()">
         <option value="supply">📥 توريد للشركة</option>
         <option value="invoice">📤 فاتورة آجلة</option>
         <option value="mubadala">💰 مبادلة (سحب من الشركة)</option>
         <option value="adjust_add">⚖️ تسوية (إضافة)</option>
         <option value="adjust_sub">⚖️ تسوية (خصم)</option>
       </select>
-      <div id="compPayMethodWrap" style="display:none">
-        <label>طريقة الدفع</label>
-        <select id="compPayMethod" onchange="toggleCompWallet()">
+      <div id="compPayMethodWrap" style="display:none;background:#f7f9f2;border:1px solid #d4dcc0;border-radius:8px;padding:10px;margin-top:10px">
+        <label>طريقة التوريد</label>
+        <select id="compPayMethod" onchange="toggleCompPay()">
           <option value="cash">💵 كاش</option>
           <option value="wallet">💼 محفظة</option>
           <option value="insta">📸 انستا</option>
+          <option value="client">👤 مباشر من عميل</option>
         </select>
         <div id="compWalletWrap" style="display:none;margin-top:8px">
           <label>اختار المحفظة</label>
           <select id="compWalletSelect"></select>
+        </div>
+        <div id="compClientWrap" style="display:none;margin-top:8px">
+          <label>اختار العميل</label>
+          <select id="compClientSelect"></select>
         </div>
       </div>
       <label>التاريخ</label>
@@ -759,11 +764,36 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
 <script>
 const DK='konnash_v6';
 
+const SEED_CUSTOMERS = [
+["الرزاق",22000],["نسر الصعيد 3",21503],["كاجو",21282],["مهران",16002],["البطل",16000.5],
+["محمد يوسف",15160],["نور الإسلام",14091],["الوكيل",13956.5],["ستار",12462],["محمصة ياسر",12248],
+["الجندي",12000],["محمصة حمادة",11335],["أمان",10000],["محمد أمين",9824],["باروكا",9788],
+["أفندينا",8826],["حسن السواق",8410],["صبري أم السلطان",7675],["البطل 3",7000.5],["دخان",7000],
+["بشرة خير",6303],["التوحيد",6255],["حودة",6000],["سمسم",5200],["عطارة",5016],
+["السمان",4997],["زيزو",4829],["اللبان القدس",4501],["حكاية",4495],["رجب",4451],
+["المدينة",4145],["زنزم",3897.5],["سندس",3695],["فنتزا",3644],["الخليل",3607],
+["الفتح",3500],["اللبان الشيخ",3312],["مازن",3232],["وطنية جديدة",3135],["طاووق السوالق",3062],
+["مكانك",3044],["سامح",2678],["النجم",2496],["عباد",2387],["بازار حسن",2334],
+["الفلاح خفاجة",2280],["محمصة حمادة 2",2088],["العطار",2000],["الصفوة",1850],["لوز",1460],
+["يس",1400],["إبراهيم",1264],["إسماعيل",1010],["المول",885],["المصطفى",807],
+["المحروسة",720],["دميانة",694.5],["قاصد كريم",505],["عبد الباقي",419],["بازار إبراهيم",346],
+["ياسر",200],["سبعاوي",178.5],["يعقوب",168],["نسر 2 فتح الله",48],["الزيعو",40],
+["قباري",8],["الرغيف",6],
+["المرسي",140000],["إبراهيم",125000],["حديده",57671],["السوهاجي",23494]
+];
 
-const SEED_CUSTOMERS = [];
-const SEED_SPECIAL = [];
+const SEED_SPECIAL = [
+["محفظة",1805,"wallet"],["سبتمبر",1587,"collection"],["أغسطس",15,"collection"],
+["محفظة فارس",0,"wallet"],["محفظة مانز 8061",0,"wallet"],
+["نقديه يونيو",0,"collection"],["نقديه يوليو",0,"collection"],["انستا",0,"insta"]
+];
 
-const SEED_SUPPLIERS = [];
+const SEED_SUPPLIERS = [
+["السيد ابواي",99870,"payment"],
+["ام عبده",30000,"purchase"],
+["شهر الفسل",27986,"payment"],
+["ابراهيم سبتمبر",5461,"payment"]
+];
 
 function load(){
   try{
@@ -948,48 +978,6 @@ function saveNewSupplier(){
 
 
 
-function toggleCompPayMethod(){
-  var t = document.getElementById('compTxType');
-  var w = document.getElementById('compPayMethodWrap');
-  if(!t || !w) return;
-  // نظهر طريقة الدفع بس للتوريد
-  if(t.value === 'supply'){
-    w.style.display = 'block';
-    fillCompWallets();
-  } else {
-    w.style.display = 'none';
-  }
-}
-function toggleCompWallet(){
-  var m = document.getElementById('compPayMethod');
-  var w = document.getElementById('compWalletWrap');
-  if(!m || !w) return;
-  if(m.value === 'wallet'){
-    w.style.display = 'block';
-    fillCompWallets();
-  } else {
-    w.style.display = 'none';
-  }
-}
-function fillCompWallets(){
-  var sel = document.getElementById('compWalletSelect');
-  if(!sel) return;
-  var d = load();
-  sel.innerHTML = '';
-  (d.accounts || []).filter(function(a){ return a.type === 'wallet'; }).forEach(function(a){
-    var o = document.createElement('option');
-    o.value = a.name;
-    o.textContent = a.name + (a.number ? ' - ' + a.number : '');
-    sel.appendChild(o);
-  });
-  if(sel.options.length === 0){
-    var o2 = document.createElement('option');
-    o2.value = '';
-    o2.textContent = '-- مفيش محافظ --';
-    sel.appendChild(o2);
-  }
-}
-
 function addCompanyTx(){
   const type = document.getElementById('compTxType').value;
   const date = document.getElementById('compTxDate').value || new Date().toISOString().split('T')[0];
@@ -1004,25 +992,22 @@ function addCompanyTx(){
     if(!d.company.supplies) d.company.supplies = [];
     var payMethod = (document.getElementById('compPayMethod') || {}).value || 'cash';
     var walletName = '';
+    var clientName = '';
     if(payMethod === 'wallet'){
-      var wSel = document.getElementById('compWalletSelect');
-      walletName = wSel ? wSel.value : '';
+      walletName = (document.getElementById('compWalletSelect') || {}).value || '';
       if(!walletName){ alert('اختار المحفظة'); return; }
     }
-    d.company.supplies.push({amount: amount, note: note, date: date, method: payMethod, walletName: walletName});
-    // نسجل خروج الفلوس من الوسيلة
+    if(payMethod === 'client'){
+      clientName = (document.getElementById('compClientSelect') || {}).value || '';
+      if(!clientName){ alert('اختار العميل'); return; }
+    }
+    d.company.supplies.push({amount: amount, note: note, date: date, method: payMethod, walletName: walletName, clientName: clientName});
     if(!d.txs) d.txs = [];
-    if(payMethod === 'wallet'){
+    if(payMethod === 'wallet' && walletName){
       d.txs.push({
         name: walletName, type: 'debit_wallet', amount: amount,
         date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
         original: '', wallet_name: walletName
-      });
-    } else if(payMethod === 'cash'){
-      d.txs.push({
-        name: 'كاش', type: 'debit_cash', amount: amount,
-        date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
-        original: ''
       });
     } else if(payMethod === 'insta'){
       d.txs.push({
@@ -1030,9 +1015,15 @@ function addCompanyTx(){
         date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
         original: '', wallet_name: 'انستا'
       });
+    } else if(payMethod === 'client' && clientName){
+      d.txs.push({
+        name: clientName, type: 'supply_to_company', amount: amount,
+        date: date, note: 'توريد للشركة' + (note ? ': ' + note : ''),
+        original: ''
+      });
     }
-    var mLabel = payMethod === 'cash' ? 'كاش' : (payMethod === 'wallet' ? walletName : 'انستا');
-    alert('✅ اتسجل توريد ' + fmt(amount) + ' ج من ' + mLabel);
+    var mLabel = payMethod === 'cash' ? 'كاش' : (payMethod === 'wallet' ? ('محفظة ' + walletName) : (payMethod === 'insta' ? 'انستا' : ('من ' + clientName)));
+    alert('✅ اتسجل توريد ' + fmt(amount) + ' ج — ' + mLabel);
   }
   else if(type === 'invoice'){
     // نضيف فاتورة آجلة (كأنها لعملاء متعددين) — هنضيفها كمعاملة عامة
@@ -1408,8 +1399,8 @@ function computeBalances(asOfDate){
       e.credit+=t.amount;
       e.wallet_in+=t.amount;
       e.commission+=(t.commission||0);
-      // نضيف المبلغ لحساب المحفظة المحددة (بس لو مختلف عن الحساب)
-      if(t.wallet_name && t.wallet_name !== t.name && b[t.wallet_name]){
+      // نضيف المبلغ لحساب المحفظة المحددة
+      if(t.wallet_name && b[t.wallet_name]){
         b[t.wallet_name].credit += t.amount;
       }
     }
@@ -1431,17 +1422,6 @@ function computeBalances(asOfDate){
       e.monthly[m]+=t.amount;
     }
     if(t.date&&(!e.lastDate||t.date>e.lastDate)) e.lastDate=t.date;
-  });
-  // معالجة السحوبات عشان تأثر على أرصدة المحافظ
-  (d.expenses||[]).forEach(function(ex){
-    if(asOfDate && ex.date > asOfDate) return;
-    var amt = Number(ex.amount||0);
-    if(ex.method === 'wallet' && ex.walletName && b[ex.walletName]){
-      b[ex.walletName].debit += amt;
-    }
-    if(ex.method === 'insta' && b['انستا']){
-      b['انستا'].debit += amt;
-    }
   });
   Object.keys(b).forEach(function(name){
     const e=b[name];
@@ -2144,6 +2124,17 @@ function addTx(){
   const tx={name:name,type:type,amount:amount,date:date,note:note,original:original,wallet_name:wallet_name};
   if(type==='credit_wallet') tx.commission=Math.round(amount*0.01*100)/100;
   d.txs.push(tx);
+  // لو توريد للشركة: نسجله كمان في company.supplies عشان مديونية الشركة تقل
+  if(type === 'supply_to_company'){
+    if(!d.company) d.company = {creditLimit:1250000, closeDay:25, supplies:[], mubadalas:[], adjustments:[]};
+    if(!d.company.supplies) d.company.supplies = [];
+    d.company.supplies.push({
+      amount: amount,
+      date: date,
+      note: (note || 'توريد للشركة') + (name ? ' — ' + name : ''),
+      name: name
+    });
+  }
   save(d);
   document.getElementById('fAmt').value='';
   document.getElementById('fNote').value='';
@@ -2601,10 +2592,11 @@ function getWalletMonthly(walletName){
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
   let total = 0;
-  // نجمع السحوبات من المحفظة عشان الليميت يقل
-  (d.expenses||[]).forEach(function(e){
-    if(e.method === 'wallet' && e.walletName === walletName && e.date >= monthStart){
-      total += Number(e.amount||0);
+  d.txs.forEach(function(t){
+    if(t.name === walletName && t.date >= monthStart){
+      if(t.type === 'credit_cash' || t.type === 'credit_wallet' || t.type === 'credit_insta'){
+        total += t.amount;
+      }
     }
   });
   return { total: total, monthStart: monthStart };
