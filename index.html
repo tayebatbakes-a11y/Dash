@@ -256,6 +256,18 @@ button.warn{background:#a87819;color:#fff;box-shadow:0 2px 5px rgba(168,120,25,.
         <label>المحفظة</label>
         <select id="fWallet"></select>
       </div>
+      <div id="supplyMethodBox" style="display:none;background:#f7f9f2;border:1px solid #d4dcc0;border-radius:8px;padding:10px;margin-top:10px">
+        <label>طريقة التوريد</label>
+        <select id="supplyMethod" onchange="updateSupplyMethod()">
+          <option value="cash">💵 كاش</option>
+          <option value="wallet">💼 محفظة</option>
+          <option value="insta">📸 انستا</option>
+        </select>
+        <div id="supplyWalletBox" style="display:none;margin-top:8px">
+          <label>اختار المحفظة</label>
+          <select id="supplyWalletSelect"></select>
+        </div>
+      </div>
       <label>المبلغ</label>
       <input id="fAmt" type="number" oninput="updateComm()">
       <div id="commBox" class="commission-info" style="display:none"></div>
@@ -1474,6 +1486,19 @@ function computeBalances(asOfDate){
         b[t.wallet_name].credit += t.amount;
       }
     }
+    else if(t.type==='supply_out'){
+      // توريد للشركة — نقص من الوسيلة
+      if(t.method === 'wallet' && t.wallet_name && b[t.wallet_name]){
+        b[t.wallet_name].debit += t.amount;
+      }
+      if(t.method === 'insta' && b['انستا']){
+        b['انستا'].debit += t.amount;
+      }
+      // العميل اللي ورد منه (لو موجود) — مديونيته تقل
+      if(t.name && b[t.name] && b[t.name].type === 'client'){
+        b[t.name].credit += t.amount;
+      }
+    }
     else if(t.type==='mujannab'){e.mujannab+=t.amount;}
     else e.credit+=t.amount;
     if(t.type==='debit'&&t.date){
@@ -2149,7 +2174,35 @@ function fillAccountSelect(){
 function updateType(){
   const type=document.getElementById('fType').value;
   document.getElementById('walletBox').style.display=type==='credit_wallet'?'block':'none';
+  var smBox = document.getElementById('supplyMethodBox');
+  if(smBox) smBox.style.display = type==='supply_to_company' ? 'block' : 'none';
+  if(type==='supply_to_company') fillSupplyWallets();
   updateComm();
+}
+function updateSupplyMethod(){
+  var m = document.getElementById('supplyMethod');
+  var w = document.getElementById('supplyWalletBox');
+  if(!m || !w) return;
+  w.style.display = (m.value === 'wallet') ? 'block' : 'none';
+  if(m.value === 'wallet') fillSupplyWallets();
+}
+function fillSupplyWallets(){
+  var sel = document.getElementById('supplyWalletSelect');
+  if(!sel) return;
+  var d = load();
+  sel.innerHTML = '';
+  var wallets = (d.accounts || []).filter(function(a){ return a.type === 'wallet'; });
+  if(wallets.length === 0){
+    var o = document.createElement('option');
+    o.value = ''; o.textContent = '-- مفيش محافظ --';
+    sel.appendChild(o);
+    return;
+  }
+  wallets.forEach(function(a){
+    var o = document.createElement('option');
+    o.value = a.name; o.textContent = a.name;
+    sel.appendChild(o);
+  });
 }
 
 function updateComm(){
@@ -2186,14 +2239,36 @@ function addTx(){
   d.txs.push(tx);
   // لو توريد للشركة: نسجله كمان في company.supplies عشان مديونية الشركة تقل
   if(type === 'supply_to_company'){
+    var payMethod = (document.getElementById('supplyMethod') || {}).value || 'cash';
+    var walletName = '';
+    if(payMethod === 'wallet'){
+      walletName = (document.getElementById('supplyWalletSelect') || {}).value || '';
+      if(!walletName){ alert('اختار المحفظة'); return; }
+    }
     if(!d.company) d.company = {creditLimit:1250000, closeDay:25, supplies:[], mubadalas:[], adjustments:[]};
     if(!d.company.supplies) d.company.supplies = [];
     d.company.supplies.push({
       amount: amount,
       date: date,
       note: (note || 'توريد للشركة') + (name ? ' — ' + name : ''),
-      name: name
+      name: name,
+      method: payMethod,
+      walletName: walletName
     });
+    // نسجل خروج الفلوس من الوسيلة لو محفظة أو انستا
+    if(payMethod === 'wallet' && walletName){
+      d.txs.push({
+        name: walletName, type: 'supply_out', amount: amount, method: 'wallet',
+        date: date, note: 'توريد للشركة من ' + name,
+        original: '', wallet_name: walletName
+      });
+    } else if(payMethod === 'insta'){
+      d.txs.push({
+        name: 'انستا', type: 'supply_out', amount: amount, method: 'insta',
+        date: date, note: 'توريد للشركة من ' + name,
+        original: ''
+      });
+    }
   }
   save(d);
   document.getElementById('fAmt').value='';
